@@ -368,18 +368,26 @@ namespace StockTracTenantManager
 						Configuration.IdentityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName)))
 			{
-				connection.Open();
-				string query = "SELECT [UserName] FROM [dbo].[AspNetUsers]";
-				using (SqlCommand command = new SqlCommand(query, connection))
-				{
-					using (SqlDataReader reader = command.ExecuteReader())
+                try
+                {
+					connection.Open();
+					string query = "SELECT [UserName] FROM [dbo].[AspNetUsers]";
+					using (SqlCommand command = new SqlCommand(query, connection))
 					{
-						while (reader.Read())
+						using (SqlDataReader reader = command.ExecuteReader())
 						{
-							userNames.Add(reader.GetString(0));
+							while (reader.Read())
+							{
+								userNames.Add(reader.GetString(0));
+							}
 						}
 					}
 				}
+                catch (Exception ex)
+                {
+					Console.WriteLine(ex);
+					return null;
+                }
 			}
 
 			return userNames;

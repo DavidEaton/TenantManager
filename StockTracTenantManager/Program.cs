@@ -147,6 +147,9 @@ namespace StockTracTenantManager
 		/// </summary>
 		private static void PrintUserNamesList()
 		{
+			if (userNames == null)
+				return;
+
 			Console.WriteLine("Current UserNames in use:");
 			foreach (string name in userNames)
 			{
@@ -350,7 +353,7 @@ namespace StockTracTenantManager
 		//     A returned userName indicates success.
 		//
 		// Parameters:
-		//   s:
+		//   userName:
 		//     A string containing the new userName to lookup.
 		//
 		//   result:
@@ -360,12 +363,13 @@ namespace StockTracTenantManager
 		//     any value originally supplied in result will be overwritten.
 		//
 		// Returns:
-		//     true if s was converted successfully; otherwise, false.
+		//     true if userName was converted successfully; otherwise, false.
 		private static String TryValidateNewUserName(string userName, out string result)
 		{
-			if (userName == null || userName == String.Empty) return result = 0.ToString();
+			if (userNames == null)
+				return result = 0.ToString();
 
-			//string userNameLower = userName.ToLower();
+			if (userName == null || userName == String.Empty) return result = 0.ToString();
 
 			if (userNames.FirstOrDefault(users => users.Contains(userName)) != null)
 				return result = 0.ToString();
