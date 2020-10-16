@@ -225,15 +225,50 @@ namespace StockTracTenantManager
 
 				conn.Open();
 				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "INSERT INTO [dbo].[AspNetUsers] ([Id],[Email],[NormalizedEmail],[NormalizedUserName],[PasswordHash],[SecurityStamp],[UserName],[Name],[Role],[TenantId], [TenantName]) VALUES (@id,@email,@normalizedEmail,@normalizedUserName,@passwordHash,@securityStamp,@userName,@name,@role,@tenantId,@tenantName)";
+				cmd.CommandText = @"INSERT INTO [dbo].[AspNetUsers] (
+											 [Id]
+											 ,[UserName]
+											 ,[NormalizedUserName]
+											 ,[Email]
+											 ,[NormalizedEmail]
+											 ,[EmailConfirmed]
+											 ,[PasswordHash]
+											 ,[SecurityStamp]
+											 ,[PhoneNumberConfirmed]
+											 ,[TwoFactorEnabled]
+											 ,[LockoutEnabled]
+											 ,[AccessFailedCount]
+											 ,[Role]
+											 ,[TenantId]
+											 ,[TenantName])
+											 VALUES (
+											 @id
+											 ,@userName
+											 ,@normalizedUserName
+											 ,@email
+											 ,@normalizedEmail
+											 ,@emailConfirmed
+											 ,@passwordHash
+											 ,@securityStamp
+											 ,@phoneNumberConfirmed
+											 ,@twoFactorEnabled
+											 ,@lockoutEnabled
+											 ,@accessFailedCount
+											 ,@role
+											 ,@tenantId
+											 ,@tenantName)";
 				cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString().ToLower());
+				cmd.Parameters.AddWithValue("@userName", userName);
+				cmd.Parameters.AddWithValue("@normalizedUserName", userName.ToUpper());
 				cmd.Parameters.AddWithValue("@email", email);
 				cmd.Parameters.AddWithValue("@normalizedEmail", email.ToUpper());
-				cmd.Parameters.AddWithValue("@normalizedUserName", userName.ToUpper());
+				cmd.Parameters.AddWithValue("@emailConfirmed", true);
 				cmd.Parameters.AddWithValue("@passwordHash", passwordHash);
 				cmd.Parameters.AddWithValue("@securityStamp", Guid.NewGuid());
-				cmd.Parameters.AddWithValue("@userName", userName);
-				cmd.Parameters.AddWithValue("@name", userName);
+				cmd.Parameters.AddWithValue("@phoneNumberConfirmed", false);
+				cmd.Parameters.AddWithValue("@twoFactorEnabled", false);
+				cmd.Parameters.AddWithValue("@lockoutEnabled", false);
+				cmd.Parameters.AddWithValue("@accessFailedCount", 0);
 				cmd.Parameters.AddWithValue("@role", role);
 				cmd.Parameters.AddWithValue("@tenantId", tenantId);
 				cmd.Parameters.AddWithValue("@tenantName", tenantName);

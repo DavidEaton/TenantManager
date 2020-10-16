@@ -279,63 +279,94 @@ namespace StockTracTenantManager
 		{
 			ListShardMap<int> shardMap = TryGetListShardMap();
 			if (shardMap != null)
-			{
-				Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
-				Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
-				string databaseName = Console.ReadLine().ToLower();
-				databaseName = Regex.Replace(databaseName, @"\s", "");
+            {
+                string databaseName = GetDatabaseNameFromUser();
 
-				Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
-				Console.WriteLine("Your entry will be displayed on the StockTrac app when users from this company are logged in.");
-				string companyName = Console.ReadLine();
+                string companyName = GetCompanyNameFromUser();
 
-				Console.WriteLine("Please enter the Customer's Admin UserName.");
-				string userName = string.Empty;
-				while (TryValidateNewUserName(Console.ReadLine(), out userName) == 0.ToString())
-				{
-					Console.WriteLine("Name is already in use");
-					Console.WriteLine("Please enter a unique UserName for Customer's Admin UserName.");
-				}
+                Console.WriteLine("Please enter the Admin user's Email.");
+                string email = Console.ReadLine();
 
-				Console.WriteLine("Please enter the Admin user's Email.");
-				string email = Console.ReadLine();
-				Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
-				string password = Console.ReadLine();
+                Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
+                string password = Console.ReadLine();
 
-				Console.WriteLine("1. This customer uses the English system of measurement.");
-				Console.WriteLine("2. This customer uses the Metric system of measurement.");
-				int som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-				while (som < 0 || som > 2)
-					som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-				string somString = (som == 1) ? "English" : "Metric";
+                int som;
+                string somName;
+                GetSystemOfMeasurementFromUser(out som, out somName);
 
-				Console.WriteLine("1. Create blank database");
-				Console.WriteLine("2. Create demo database");
-				int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-				while (dataOption < 0 || dataOption > 2)
-					dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+                int dataOption = GetDataOptionFromUser();
 
-				Console.WriteLine();
-				Console.WriteLine("Creating: {0} using {1} system of measurement", databaseName, somString);
-				CreateShardSample.CreateShard(shardMap, databaseName, dataOption, som);
+                Console.WriteLine();
+                Console.WriteLine("Creating: {0} using {1} system of measurement", databaseName, somName);
+                CreateShardSample.CreateShard(shardMap, databaseName, dataOption, som);
 
-				var tenantId = SqlDatabaseUtils.TryGetShardId(databaseName);
-				Console.WriteLine("ShardId: {0}", tenantId);
+                var tenantId = SqlDatabaseUtils.TryGetShardId(databaseName);
+                Console.WriteLine("ShardId: {0}", tenantId);
 
-				//Insert new tenant row in IdentityTenants.dbo.AspNetTenants table
-				var success = SqlDatabaseUtils.InsertNewTenant(databaseName, tenantId, companyName);
+                //Insert new tenant row in IdentityTenants.dbo.AspNetTenants table
+                var success = SqlDatabaseUtils.InsertNewTenant(databaseName, tenantId, companyName);
 
-				if (success)
-				{
-					InsertNewTenantAdminUser(userName, email, password, tenantId, databaseName);
-					userNames.Add(userName);
-				}
+                if (success)
+                {
+                    InsertNewTenantAdminUser(email, email, password, tenantId, databaseName);
+                    userNames.Add(email);
+                }
 
-				AzureStorageUtils.CreateTenantStorageContainer(databaseName);
-			}
-		}
+                AzureStorageUtils.CreateTenantStorageContainer(databaseName);
+            }
+        }
 
-		private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)
+        private static int GetDataOptionFromUser()
+        {
+            Console.WriteLine("1. Create blank database");
+            Console.WriteLine("2. Create demo database");
+            int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            while (dataOption < 0 || dataOption > 2)
+                dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            return dataOption;
+        }
+
+        private static void GetSystemOfMeasurementFromUser(out int som, out string somString)
+        {
+            Console.WriteLine("1. This customer uses the English system of measurement.");
+            Console.WriteLine("2. This customer uses the Metric system of measurement.");
+            som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            while (som < 0 || som > 2)
+                som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            somString = (som == 1) ? "English" : "Metric";
+        }
+
+        private static string GetCompanyAdminUserName()
+        {
+            Console.WriteLine("Please enter the Customer's Admin UserName.");
+            string userName = string.Empty;
+            while (TryValidateNewUserName(Console.ReadLine(), out userName) == 0.ToString())
+            {
+                Console.WriteLine("Name is already in use");
+                Console.WriteLine("Please enter a unique UserName for Customer's Admin UserName.");
+            }
+
+            return userName;
+        }
+
+        private static string GetCompanyNameFromUser()
+        {
+            Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
+            Console.WriteLine("Your entry will be displayed on the StockTrac app when users from this company are logged in.");
+            string companyName = Console.ReadLine();
+            return companyName;
+        }
+
+        private static string GetDatabaseNameFromUser()
+        {
+            Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
+            Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
+            string databaseName = Console.ReadLine().ToLower();
+            databaseName = Regex.Replace(databaseName, @"\s", "");
+            return databaseName;
+        }
+
+        private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)
 		{
 			// Hash the user's password
 			var hasher = new PasswordHasher();
