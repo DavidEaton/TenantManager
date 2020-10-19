@@ -87,8 +87,8 @@ namespace StockTracTenantManager
 				PrintShardMapState();
 				Console.WriteLine();
 
-				PrintUserNamesList();
-				Console.WriteLine();
+				//PrintUserNamesList();
+				//Console.WriteLine();
 
 				PrintMenu();
 				Console.WriteLine();
