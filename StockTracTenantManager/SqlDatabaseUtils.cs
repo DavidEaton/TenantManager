@@ -113,12 +113,15 @@ namespace StockTracTenantManager
 					{
 						if (!DatabaseExists(server, db))
 						{
+							if (Configuration.UseElasticPool)
+                            {
 							// Begin creation (which is async for Standard/Premium editions)
-							cmd.CommandText = string.Format(
-								"CREATE DATABASE {0} (EDITION = '{1}', SERVICE_OBJECTIVE = {2})",
-								BracketEscapeName(db),
-								Configuration.DatabaseEdition,
-								Configuration.ServiceObjective);
+							cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
+                            }
+							else
+                            {
+								cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}')";
+							}
 							cmd.CommandTimeout = 120;
 							cmd.ExecuteNonQuery();
 						}

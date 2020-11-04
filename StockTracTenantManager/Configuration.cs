@@ -61,6 +61,18 @@ namespace StockTracTenantManager
         }
 
         /// <summary>
+        /// Gets the edition to use for Shards and Shard Map Manager Database if the server is an Azure SQL DB server. 
+        /// If the server is a regular SQL Server then this is ignored.
+        /// </summary>
+        public static bool UseElasticPool
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings["UseElasticPool"] == "true";
+            }
+        }
+
+        /// <summary>
         /// Gets the Pricing Tier, aka performance level, aka SERVICE_OBJECTIVE to use for Shards if on Azure SQL DB. 
         /// If the server is a regular SQL Server then this is ignored.
         /// </summary>
@@ -104,8 +116,8 @@ namespace StockTracTenantManager
         /// </summary>
         public static string GetCredentialsConnectionString(bool tenants)
         {
-            string userId = string.Empty;
-            string password = string.Empty;
+            string userId;
+            string password;
 
             if (tenants)
             {
