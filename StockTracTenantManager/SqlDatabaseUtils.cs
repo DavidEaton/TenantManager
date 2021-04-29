@@ -9,10 +9,10 @@ using System.Threading;
 
 namespace StockTracTenantManager
 {
-    /// <summary>
-    /// Helper methods for interacting with SQL Databases.
-    /// </summary>
-    internal static class SqlDatabaseUtils
+	/// <summary>
+	/// Helper methods for interacting with SQL Databases.
+	/// </summary>
+	internal static class SqlDatabaseUtils
 	{
 		/// <summary>
 		/// SQL master database name.
@@ -114,12 +114,12 @@ namespace StockTracTenantManager
 						if (!DatabaseExists(server, db))
 						{
 							if (Configuration.UseElasticPool)
-                            {
+							{
 							// Begin creation (which is async for Standard/Premium editions)
 							cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
-                            }
+							}
 							else
-                            {
+							{
 								cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}')";
 							}
 							cmd.CommandTimeout = 120;
@@ -173,7 +173,7 @@ namespace StockTracTenantManager
 				{
 					cmd.CommandText = string.Format(
 						@"ALTER DATABASE {0} SET SINGLE_USER WITH ROLLBACK IMMEDIATE
-                        DROP DATABASE {0}",
+						DROP DATABASE {0}",
 						BracketEscapeName(db));
 					cmd.ExecuteNonQuery();
 				}
@@ -406,8 +406,8 @@ namespace StockTracTenantManager
 						Configuration.IdentityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName)))
 			{
-                try
-                {
+				try
+				{
 					connection.Open();
 					string query = "SELECT [UserName] FROM [dbo].[AspNetUsers]";
 					using (SqlCommand command = new SqlCommand(query, connection))
@@ -421,11 +421,11 @@ namespace StockTracTenantManager
 						}
 					}
 				}
-                catch (Exception ex)
-                {
+				catch (Exception ex)
+				{
 					Console.WriteLine(ex);
 					return null;
-                }
+				}
 			}
 
 			return userNames;
@@ -506,7 +506,7 @@ namespace StockTracTenantManager
 			/// <summary>
 			/// Enterprise transient error detection strategy.
 			/// </summary>
-			private SqlDatabaseTransientErrorDetectionStrategy _sqltransientErrorDetectionStrategy = new SqlDatabaseTransientErrorDetectionStrategy();
+			private SqlDatabaseTransientErrorDetectionStrategy sqltransientErrorDetectionStrategy = new SqlDatabaseTransientErrorDetectionStrategy();
 
 			/// <summary>
 			/// Checks with enterprise library's default handler to see if the error is transient, additionally checks
@@ -516,7 +516,7 @@ namespace StockTracTenantManager
 			/// <returns><c>true</c> if exception is considered transient, <c>false</c> otherwise.</returns>
 			public bool IsTransient(Exception ex)
 			{
-				return _sqltransientErrorDetectionStrategy.IsTransient(ex) || IsTransientException(ex);
+				return sqltransientErrorDetectionStrategy.IsTransient(ex) || IsTransientException(ex);
 			}
 
 			/// <summary>

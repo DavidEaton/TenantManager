@@ -10,30 +10,37 @@ using Microsoft.AspNet.Identity;
 
 namespace StockTracTenantManager
 {
-    internal class Program
+	internal class Program
 	{
+		private const ConsoleColor EnabledColor = ConsoleColor.White; // color for items that are expected to succeed
+		private const ConsoleColor DisabledColor = ConsoleColor.DarkGray; // color for items that are expected to fail
+		private const ConsoleColor DangerColor = ConsoleColor.Red; // color for actions that are dangerous invoke
+
+		/// <summary>
+		/// The shard map manager, or null if it does not exist.
+		/// It is recommended that you keep only one shard map manager instance in
+		/// memory per AppDomain so that the mapping cache is not duplicated.
+		/// </summary>
+		private static ShardMapManager shardMapManager;
+		private static List<string> userNames;
+
 		public static void Main()
 		{
 			// Welcome screen
 			Console.WriteLine("***********************************************************");
-			Console.WriteLine("***    StockTrac Tenant Manager    ***");
+			Console.WriteLine("***          Tenant Manager    ***");
 			Console.WriteLine();
 
 			string integratedSecurityString = ConfigurationManager.AppSettings["IntegratedSecurity"];
 			bool integratedSecurity = integratedSecurityString != null && bool.Parse(integratedSecurityString);
 
-			if (integratedSecurity)
-			{
-				Console.WriteLine("***    CONNECTED TO LOCAL DEVELOPMENT    ***");
-				Console.WriteLine("***********************************************************");
-				Console.WriteLine();
-			}
-			else
-			{
-				Console.WriteLine("***          CONNECTED            ***");
-				Console.WriteLine("***********************************************************");
-				Console.WriteLine();
-			}
+			Console.WriteLine(integratedSecurity
+												? $"***    CONNECTED TO LOCAL DEVELOPMENT    ***"
+												: "***          CONNECTED            ***");
+			Console.WriteLine("***********************************************************");
+			Console.WriteLine();
+
+			//}
 
 			// Verify that we can connect to the Sql Database that is specified in App.config settings
 			if (!SqlDatabaseUtils.TryConnectToSqlDatabase())
@@ -48,7 +55,6 @@ namespace StockTracTenantManager
 					Console.ReadLine();
 				}
 
-				// Exit
 				return;
 			}
 
@@ -56,13 +62,6 @@ namespace StockTracTenantManager
 			MenuLoop();
 		}
 
-		/// <summary>
-		/// The shard map manager, or null if it does not exist. 
-		/// It is recommended that you keep only one shard map manager instance in
-		/// memory per AppDomain so that the mapping cache is not duplicated.
-		/// </summary>
-		private static ShardMapManager s_shardMapManager;
-		private static List<string> userNames;
 
 		#region Program control flow
 
@@ -72,9 +71,7 @@ namespace StockTracTenantManager
 		private static void MenuLoop()
 		{
 			// Get the shard map manager, if it already exists.
-			// It is recommended that you keep only one shard map manager instance in
-			// memory per AppDomain so that the mapping cache is not duplicated.
-			s_shardMapManager = ShardManagementUtils.TryGetShardMapManager(
+			shardMapManager = ShardManagementUtils.TryGetShardMapManager(
 				Configuration.ServerName,
 				Configuration.ShardMapManagerDatabaseName);
 
@@ -86,9 +83,6 @@ namespace StockTracTenantManager
 			{
 				PrintShardMapState();
 				Console.WriteLine();
-
-				//PrintUserNamesList();
-				//Console.WriteLine();
 
 				PrintMenu();
 				Console.WriteLine();
@@ -142,24 +136,6 @@ namespace StockTracTenantManager
 				Console.WriteLine("\tShard Map contains no shards");
 			}
 		}
-		/// <summary>
-		/// Writes the usernames list to the console.
-		/// </summary>
-		private static void PrintUserNamesList()
-		{
-			if (userNames == null)
-				return;
-
-			Console.WriteLine("Current UserNames in use:");
-			foreach (string name in userNames)
-			{
-				Console.WriteLine("\t{0}", name);
-			}
-		}
-
-		private const ConsoleColor EnabledColor = ConsoleColor.White; // color for items that are expected to succeed
-		private const ConsoleColor DisabledColor = ConsoleColor.DarkGray; // color for items that are expected to fail
-		private const ConsoleColor DangerColor = ConsoleColor.Red; // color for actions that are dangerous invoke
 
 		/// <summary>
 		/// Writes the program menu.
@@ -168,7 +144,7 @@ namespace StockTracTenantManager
 		{
 			ConsoleColor createSmmColor; // color for create shard map manger menu item
 			ConsoleColor otherMenuItemColor; // color for other menu items
-			if (s_shardMapManager == null)
+			if (shardMapManager == null)
 			{
 				createSmmColor = EnabledColor;
 				otherMenuItemColor = DisabledColor;
@@ -182,8 +158,6 @@ namespace StockTracTenantManager
 			ConsoleUtils.WriteColor(createSmmColor, "1. Create tenant manager database");
 			ConsoleUtils.WriteColor(otherMenuItemColor, "2. Add a new Customer database");
 			ConsoleUtils.WriteColor(otherMenuItemColor, "3. DELETE Customer database and its user logins");
-			//ConsoleUtils.WriteColor(otherMenuItemColor, "4. Execute sample Multi-Shard Query");
-			//ConsoleUtils.WriteColor(otherMenuItemColor, "3. Drop shard map manager database and all shards");
 			ConsoleUtils.WriteColor(EnabledColor, "4. Exit");
 		}
 
@@ -211,14 +185,6 @@ namespace StockTracTenantManager
 						Console.WriteLine();
 						DropCustomerDatabaseAndLogins();
 						return true;
-					//case 4: // Multi-Shard Query
-					//    Console.WriteLine();
-					//    MultiShardQuery();
-					//    return true;
-					//case 3: // Drop all
-					//    Console.WriteLine();
-					//    DropAll();
-					//    return true;
 					case 4: // Exit
 						return false;
 				}
@@ -235,7 +201,7 @@ namespace StockTracTenantManager
 		/// </summary>
 		private static void CreateShardMapManagerAndShard()
 		{
-			if (s_shardMapManager != null)
+			if (shardMapManager != null)
 			{
 				ConsoleUtils.WriteWarning("Shard Map Manager already exists");
 				return;
@@ -253,11 +219,10 @@ namespace StockTracTenantManager
 					Configuration.ServerName,
 					Configuration.ShardMapManagerDatabaseName);
 
-			s_shardMapManager = ShardManagementUtils.CreateOrGetShardMapManager(shardMapManagerConnectionString);
+			shardMapManager = ShardManagementUtils.CreateOrGetShardMapManager(shardMapManagerConnectionString);
 
 			// Create shard map
-			ListShardMap<int> shardMap = ShardManagementUtils.CreateOrGetListShardMap<int>(
-				s_shardMapManager, Configuration.ShardMapName);
+			ShardManagementUtils.CreateOrGetListShardMap<int>(shardMapManager, Configuration.ShardMapName);
 		}
 
 		/// <summary>
@@ -269,7 +234,7 @@ namespace StockTracTenantManager
 			SchemaInfo schemaInfo = new SchemaInfo();
 
 			// Register it with the shard map manager for the given shard map name
-			s_shardMapManager.GetSchemaInfoCollection().Add(shardMapName, schemaInfo);
+			shardMapManager.GetSchemaInfoCollection().Add(shardMapName, schemaInfo);
 		}
 
 		/// <summary>
@@ -279,94 +244,79 @@ namespace StockTracTenantManager
 		{
 			ListShardMap<int> shardMap = TryGetListShardMap();
 			if (shardMap != null)
-            {
-                string databaseName = GetDatabaseNameFromUser();
+			{
+				string databaseName = GetDatabaseNameFromUser();
 
-                string companyName = GetCompanyNameFromUser();
+				string companyName = GetCompanyNameFromUser();
 
-                Console.WriteLine("Please enter the Admin user's Email.");
-                string email = Console.ReadLine();
+				Console.WriteLine("Please enter the Admin user's Email.");
+				string email = Console.ReadLine();
 
-                Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
-                string password = Console.ReadLine();
+				Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
+				string password = Console.ReadLine();
 
-                int som;
-                string somName;
-                GetSystemOfMeasurementFromUser(out som, out somName);
+				GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string systemOfMeasurementName);
 
-                int dataOption = GetDataOptionFromUser();
+				int dataOption = GetDataOptionFromUser();
 
-                Console.WriteLine();
-                Console.WriteLine("Creating: {0} using {1} system of measurement", databaseName, somName);
-                CreateShardSample.CreateShard(shardMap, databaseName, dataOption, som);
+				Console.WriteLine();
+				Console.WriteLine($"Creating: {databaseName} using {systemOfMeasurementName} system of measurement");
+				CreateShardSample.CreateShard(shardMap, databaseName, dataOption, systemOfMeasurement);
 
-                var tenantId = SqlDatabaseUtils.TryGetShardId(databaseName);
-                Console.WriteLine("ShardId: {0}", tenantId);
+				var tenantId = SqlDatabaseUtils.TryGetShardId(databaseName);
+				Console.WriteLine($"ShardId: {tenantId}");
 
-                //Insert new tenant row in IdentityTenants.dbo.AspNetTenants table
-                var success = SqlDatabaseUtils.InsertNewTenant(databaseName, tenantId, companyName);
+				//Insert new tenant row in IdentityTenants.dbo.AspNetTenants table
+				var success = SqlDatabaseUtils.InsertNewTenant(databaseName, tenantId, companyName);
 
-                if (success)
-                {
-                    InsertNewTenantAdminUser(email, email, password, tenantId, databaseName);
-                    userNames.Add(email);
-                }
+				if (success)
+				{
+					InsertNewTenantAdminUser(email, email, password, tenantId, databaseName);
+					userNames.Add(email);
+				}
 
-                AzureStorageUtils.CreateTenantStorageContainer(databaseName);
-            }
-        }
+				AzureStorageUtils.CreateTenantStorageContainer(databaseName);
+			}
+		}
 
-        private static int GetDataOptionFromUser()
-        {
-            Console.WriteLine("1. Create blank database");
-            Console.WriteLine("2. Create demo database");
-            int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            while (dataOption < 0 || dataOption > 2)
-                dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            return dataOption;
-        }
+		private static int GetDataOptionFromUser()
+		{
+			Console.WriteLine("1. Create blank database");
+			Console.WriteLine("2. Create demo database");
+			int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+			while (dataOption < 0 || dataOption > 2)
+				dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+			return dataOption;
+		}
 
-        private static void GetSystemOfMeasurementFromUser(out int som, out string somString)
-        {
-            Console.WriteLine("1. This customer uses the English system of measurement.");
-            Console.WriteLine("2. This customer uses the Metric system of measurement.");
-            som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            while (som < 0 || som > 2)
-                som = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            somString = (som == 1) ? "English" : "Metric";
-        }
+		private static void GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string somString)
+		{
+			Console.WriteLine("1. This customer uses the English system of measurement.");
+			Console.WriteLine("2. This customer uses the Metric system of measurement.");
+			systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+			while (systemOfMeasurement < 0 || systemOfMeasurement > 2)
+				systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+			somString = (systemOfMeasurement == 1) ? "English" : "Metric";
+		}
 
-        private static string GetCompanyAdminUserName()
-        {
-            Console.WriteLine("Please enter the Customer's Admin UserName.");
-            string userName = string.Empty;
-            while (TryValidateNewUserName(Console.ReadLine(), out userName) == 0.ToString())
-            {
-                Console.WriteLine("Name is already in use");
-                Console.WriteLine("Please enter a unique UserName for Customer's Admin UserName.");
-            }
+		private static string GetCompanyNameFromUser()
+		{
+			Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
+			Console.WriteLine("Your entry will be displayed on the StockTrac app when users from this company are logged in.");
+			string companyName = Console.ReadLine();
+			return companyName;
+		}
 
-            return userName;
-        }
+		private static string GetDatabaseNameFromUser()
+		{
+			Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
+			Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
+			string databaseName = Console.ReadLine().ToLower();
+			databaseName = Regex.Replace(databaseName, @"\s", "");
+			return databaseName;
+		}
 
-        private static string GetCompanyNameFromUser()
-        {
-            Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
-            Console.WriteLine("Your entry will be displayed on the StockTrac app when users from this company are logged in.");
-            string companyName = Console.ReadLine();
-            return companyName;
-        }
-
-        private static string GetDatabaseNameFromUser()
-        {
-            Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
-            Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
-            string databaseName = Console.ReadLine().ToLower();
-            databaseName = Regex.Replace(databaseName, @"\s", "");
-            return databaseName;
-        }
-
-        private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)
+		private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)
 		{
 			// Hash the user's password
 			var hasher = new PasswordHasher();
@@ -466,14 +416,14 @@ namespace StockTracTenantManager
 
 		private static ListShardMap<int> TryGetListShardMap()
 		{
-			if (s_shardMapManager == null)
+			if (shardMapManager == null)
 			{
 				ConsoleUtils.WriteWarning("Shard Map Manager has not yet been created");
 				return null;
 			}
 
 			ListShardMap<int> shardMap;
-			bool mapExists = s_shardMapManager.TryGetListShardMap(Configuration.ShardMapName, out shardMap);
+			bool mapExists = shardMapManager.TryGetListShardMap(Configuration.ShardMapName, out shardMap);
 
 			if (!mapExists)
 			{
