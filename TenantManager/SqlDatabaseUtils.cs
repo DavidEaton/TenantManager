@@ -18,6 +18,8 @@ namespace TenantManager
 		/// SQL master database name.
 		/// </summary>
 		public const string MasterDatabaseName = "master";
+		static bool isIdentity = true;
+		static bool isNotIdentity = false;
 
 		/// <summary>
 		/// Returns true if we can connect to the database.
@@ -27,7 +29,8 @@ namespace TenantManager
 			string connectionString =
 				Configuration.GetConnectionString(
 					Configuration.ServerName,
-					MasterDatabaseName);
+					MasterDatabaseName,
+					isNotIdentity);
 
 			try
 			{
@@ -53,7 +56,7 @@ namespace TenantManager
 		public static bool DatabaseExists(string server, string db)
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName),
+				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -73,7 +76,7 @@ namespace TenantManager
 		public static bool DatabaseIsOnline(string server, string db)
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName),
+				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -94,7 +97,7 @@ namespace TenantManager
 		{
 			ConsoleUtils.WriteInfo("Creating database {0}", db);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName),
+				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -149,7 +152,7 @@ namespace TenantManager
 		{
 			ConsoleUtils.WriteInfo("Deleting database '{0}'", db);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName),
+				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -188,7 +191,8 @@ namespace TenantManager
 			string shardMapManagerConnectionString =
 					Configuration.GetConnectionString(
 						Configuration.ServerName,
-						Configuration.ShardMapManagerDatabaseName);
+						Configuration.ShardMapManagerDatabaseName,
+						isNotIdentity);
 
 			if (!DatabaseExists(Configuration.ServerName, databaseName))
 			{
@@ -199,7 +203,8 @@ namespace TenantManager
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 				Configuration.GetConnectionString(
 					Configuration.ServerName,
-					Configuration.ShardMapManagerDatabaseName),
+					Configuration.ShardMapManagerDatabaseName,
+					isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -220,7 +225,8 @@ namespace TenantManager
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
 						Configuration.IdentityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName),
+						Configuration.IdentityTenantsDatabaseName,
+						isIdentity),
 					SqlRetryPolicy,
 					SqlRetryPolicy))
 			{
@@ -290,7 +296,8 @@ namespace TenantManager
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
 						Configuration.IdentityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName),
+						Configuration.IdentityTenantsDatabaseName,
+						isIdentity),
 					SqlRetryPolicy,
 					SqlRetryPolicy))
 			{
@@ -317,7 +324,8 @@ namespace TenantManager
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
 						Configuration.IdentityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName),
+						Configuration.IdentityTenantsDatabaseName,
+						isIdentity),
 					SqlRetryPolicy,
 					SqlRetryPolicy))
 			{
@@ -339,7 +347,8 @@ namespace TenantManager
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
 						Configuration.IdentityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName),
+						Configuration.IdentityTenantsDatabaseName,
+						isIdentity),
 					SqlRetryPolicy,
 					SqlRetryPolicy))
 			{
@@ -358,15 +367,17 @@ namespace TenantManager
 
 		internal static bool DeleteShard(string tenantName)
 		{
-			string shardMapManagerConnectionString =
-					Configuration.GetConnectionString(
-						Configuration.ServerName,
-						Configuration.ShardMapManagerDatabaseName);
+			//string shardMapManagerConnectionString =
+			//		Configuration.GetConnectionString(
+			//			Configuration.ServerName,
+			//			Configuration.ShardMapManagerDatabaseName,
+			//			isNotIdentity);
 
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 				Configuration.GetConnectionString(
 					Configuration.ServerName,
-					Configuration.ShardMapManagerDatabaseName),
+					Configuration.ShardMapManagerDatabaseName,
+					isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -404,7 +415,8 @@ namespace TenantManager
 
 			using (SqlConnection connection = new SqlConnection(Configuration.GetConnectionString(
 						Configuration.IdentityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName)))
+						Configuration.IdentityTenantsDatabaseName,
+						isIdentity)))
 			{
 				try
 				{
@@ -433,9 +445,9 @@ namespace TenantManager
 
 		public static void ExecuteSqlScript(string server, string db, string scriptFile)
 		{
-			ConsoleUtils.WriteInfo("Executing script {0}", scriptFile);
+			ConsoleUtils.WriteInfo($"Executing script {scriptFile}");
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, db),
+				Configuration.GetConnectionString(server, db, isNotIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{

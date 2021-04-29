@@ -16,6 +16,9 @@ namespace TenantManager
 		private const ConsoleColor DisabledColor = ConsoleColor.DarkGray; // color for items that are expected to fail
 		private const ConsoleColor DangerColor = ConsoleColor.Red; // color for actions that are dangerous invoke
 
+		static bool isIdentity = true;
+		static bool isNotIdentity = false;
+
 		/// <summary>
 		/// The shard map manager, or null if it does not exist.
 		/// It is recommended that you keep only one shard map manager instance in
@@ -217,7 +220,8 @@ namespace TenantManager
 			string shardMapManagerConnectionString =
 				Configuration.GetConnectionString(
 					Configuration.ServerName,
-					Configuration.ShardMapManagerDatabaseName);
+					Configuration.ShardMapManagerDatabaseName,
+					isNotIdentity);
 
 			shardMapManager = ShardManagementUtils.CreateOrGetShardMapManager(shardMapManagerConnectionString);
 
@@ -302,7 +306,7 @@ namespace TenantManager
 		private static string GetCompanyNameFromUser()
 		{
 			Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
-			Console.WriteLine("Your entry will be displayed on the StockTrac app when users from this company are logged in.");
+			Console.WriteLine("Your entry will be displayed when users from this company are logged in to the web client.");
 			string companyName = Console.ReadLine();
 			return companyName;
 		}

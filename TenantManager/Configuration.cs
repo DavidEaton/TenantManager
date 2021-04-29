@@ -98,62 +98,26 @@ namespace TenantManager
         /// <summary>
         /// Returns a connection string that can be used to connect to the specified server and database.
         /// </summary>
-        public static string GetConnectionString(string serverName, string database)
+        public static string GetConnectionString(string serverName, string database, bool isIdentity)
         {
-            bool tenants = serverName.Contains("tenants");
-
-            SqlConnectionStringBuilder connStr = new SqlConnectionStringBuilder(GetCredentialsConnectionString(tenants))
-            {
-                DataSource = serverName,
-                InitialCatalog = database
-            };
-            return connStr.ToString();
-        }
-
-        /// <summary>
-        /// Returns a connection string to use for Data-Dependent Routing and Multi-Shard Query,
-        /// which does not contain DataSource or InitialCatalog.
-        /// </summary>
-        public static string GetCredentialsConnectionString(bool tenants)
-        {
-            string userId;
-            string password;
-
-            if (tenants)
-            {
-                // Get User name and password from the app.config file. If they don't exist, default to string.Empty.
-                userId = ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
-                password = ConfigurationManager.AppSettings["Password"] ?? string.Empty;
-            }
-            else
-            {
-                userId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
-                password = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
-            }
-            // Get Integrated Security from the app.config file.
-            // If it exists, then parse it (throw exception on failure), otherwise default to false.
+            string userId = ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
+            string password = ConfigurationManager.AppSettings["Password"] ?? string.Empty;
+            string userIdentityId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
+            string passwordIdentity = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
             string integratedSecurityString = ConfigurationManager.AppSettings["IntegratedSecurity"];
             bool integratedSecurity = integratedSecurityString != null && bool.Parse(integratedSecurityString);
 
             SqlConnectionStringBuilder connStr = new SqlConnectionStringBuilder
             {
-                // DDR and MSQ require credentials to be set
-                UserID = userId,
-                Password = password,
+                DataSource = serverName,
+                InitialCatalog = database,
+                UserID = isIdentity ? userIdentityId : userId,
+                Password = isIdentity ? passwordIdentity : password,
                 IntegratedSecurity = integratedSecurity,
-
-                // DataSource and InitialCatalog cannot be set for DDR and MSQ APIs, because these APIs will
-                // determine the DataSource and InitialCatalog for you.
-                //
-                // DDR also does not support the ConnectRetryCount keyword introduced in .NET 4.5.1, because it
-                // would prevent the API from being able to correctly kill connections when mappings are switched
-                // offline.
-                //
-                // Other SqlClient ConnectionString keywords are supported.
-
-                ApplicationName = "StockTrac Tenant Manager v1.0",
+                ApplicationName = "Tenant Manager v1.0",
                 ConnectTimeout = 30
             };
+
             return connStr.ToString();
         }
     }

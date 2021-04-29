@@ -4,6 +4,8 @@ namespace TenantManager
 {
     internal static class ShardManagementUtils
     {
+        static bool isIdentity = true;
+        static bool isNotIdentity = false;
         /// <summary>
         /// Tries to get the ShardMapManager that is stored in the specified database.
         /// </summary>
@@ -12,7 +14,8 @@ namespace TenantManager
             string shardMapManagerConnectionString =
                     Configuration.GetConnectionString(
                         Configuration.ServerName,
-                        Configuration.ShardMapManagerDatabaseName);
+                        Configuration.ShardMapManagerDatabaseName,
+                        isNotIdentity);
 
             if (!SqlDatabaseUtils.DatabaseExists(shardMapManagerServerName, shardMapManagerDatabaseName))
             {
