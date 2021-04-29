@@ -8,7 +8,7 @@ using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement.Schema;
 using System.Text.RegularExpressions;
 using Microsoft.AspNet.Identity;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
 	internal class Program
 	{

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
     internal static class ShardManagementUtils
     {

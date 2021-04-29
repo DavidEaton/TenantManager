@@ -1,7 +1,7 @@
 ﻿using System.Configuration;
 using System.Data.SqlClient;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
     /// <summary>
     /// Provides access to app.config settings, and contains advanced configuration settings.
@@ -49,7 +49,7 @@ namespace StockTracTenantManager
         }
 
         /// <summary>
-        /// Gets the edition to use for Shards and Shard Map Manager Database if the server is an Azure SQL DB server. 
+        /// Gets the edition to use for Shards and Shard Map Manager Database if the server is an Azure SQL DB server.
         /// If the server is a regular SQL Server then this is ignored.
         /// </summary>
         public static string DatabaseEdition
@@ -61,7 +61,7 @@ namespace StockTracTenantManager
         }
 
         /// <summary>
-        /// Gets the edition to use for Shards and Shard Map Manager Database if the server is an Azure SQL DB server. 
+        /// Gets the edition to use for Shards and Shard Map Manager Database if the server is an Azure SQL DB server.
         /// If the server is a regular SQL Server then this is ignored.
         /// </summary>
         public static bool UseElasticPool
@@ -73,7 +73,7 @@ namespace StockTracTenantManager
         }
 
         /// <summary>
-        /// Gets the Pricing Tier, aka performance level, aka SERVICE_OBJECTIVE to use for Shards if on Azure SQL DB. 
+        /// Gets the Pricing Tier, aka performance level, aka SERVICE_OBJECTIVE to use for Shards if on Azure SQL DB.
         /// If the server is a regular SQL Server then this is ignored.
         /// </summary>
         public static string ServiceObjective
@@ -130,7 +130,7 @@ namespace StockTracTenantManager
                 userId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
                 password = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
             }
-            // Get Integrated Security from the app.config file. 
+            // Get Integrated Security from the app.config file.
             // If it exists, then parse it (throw exception on failure), otherwise default to false.
             string integratedSecurityString = ConfigurationManager.AppSettings["IntegratedSecurity"];
             bool integratedSecurity = integratedSecurityString != null && bool.Parse(integratedSecurityString);

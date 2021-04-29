@@ -3,7 +3,7 @@ using Azure.Storage.Blobs.Models;
 using System;
 using System.Net;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
     /// <summary>
     /// Helper methods for interacting with Azure Storage.

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
     internal static class ConsoleUtils
     {

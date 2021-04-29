@@ -7,7 +7,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace StockTracTenantManager
+namespace TenantManager
 {
 	/// <summary>
 	/// Helper methods for interacting with SQL Databases.

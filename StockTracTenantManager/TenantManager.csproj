@@ -160,11 +160,15 @@
     <Content Include="scripts\InsertDemoEnglish.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="scripts\InsertDemoMetric.sql" />
+    <Content Include="scripts\InsertDemoMetric.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="scripts\InsertRequiredEnglish.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="scripts\InsertRequiredMetric.sql" />
+    <Content Include="scripts\InsertRequiredMetric.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="scripts\Structure.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
