@@ -17,6 +17,22 @@ namespace TenantManager
         }
 
         /// <summary>
+        /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
+        /// </summary>
+        public static string Name
+        {
+            get { return ConfigurationManager.AppSettings["Name"]; }
+        }
+
+        /// <summary>
+        /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
+        /// </summary>
+        public static bool IsDevelopment
+        {
+            get { return bool.Parse(ConfigurationManager.AppSettings["IsDevelopment"] ?? "false"); }
+        }
+
+        /// <summary>
         /// Gets the database name for the Shard Map Manager database, which contains the shard maps.
         /// </summary>
         public static string ShardMapManagerDatabaseName
@@ -100,12 +116,7 @@ namespace TenantManager
         /// </summary>
         public static string GetConnectionString(string serverName, string database, bool isIdentity)
         {
-            string userId = ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
-            string password = ConfigurationManager.AppSettings["Password"] ?? string.Empty;
-            string userIdentityId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
-            string passwordIdentity = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
-            string integratedSecurityString = ConfigurationManager.AppSettings["IntegratedSecurity"];
-            bool integratedSecurity = integratedSecurityString != null && bool.Parse(integratedSecurityString);
+             GetCredentials(out string userId, out string password, out string userIdentityId, out string passwordIdentity);
 
             SqlConnectionStringBuilder connStr = new SqlConnectionStringBuilder
             {
@@ -113,12 +124,30 @@ namespace TenantManager
                 InitialCatalog = database,
                 UserID = isIdentity ? userIdentityId : userId,
                 Password = isIdentity ? passwordIdentity : password,
-                IntegratedSecurity = integratedSecurity,
+                IntegratedSecurity = IsDevelopment,
                 ApplicationName = "Tenant Manager v1.0",
                 ConnectTimeout = 30
             };
 
             return connStr.ToString();
+        }
+
+        private static void GetCredentials(out string userId, out string password, out string userIdentityId, out string passwordIdentity)
+        {
+            // Production Settings
+                userId = null;
+                password = null;
+                userIdentityId = null;
+                passwordIdentity = null;
+
+            // Development Settings
+            if (IsDevelopment)
+            {
+                userId = ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
+                password = ConfigurationManager.AppSettings["Password"] ?? string.Empty;
+                userIdentityId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
+                passwordIdentity = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
+            }
         }
     }
 }
