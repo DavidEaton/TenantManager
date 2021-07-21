@@ -264,7 +264,8 @@ namespace TenantManager
                     userNames.Add(email);
                 }
 
-                AzureStorageUtils.CreateTenantStorageContainer(databaseName);
+                if (!Configuration.IsDevelopment)
+                    AzureStorageUtils.CreateTenantStorageContainer(databaseName);
             }
         }
 
