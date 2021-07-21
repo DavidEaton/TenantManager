@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Configuration;
 using System.Diagnostics;
 using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement;
 using System.Text.RegularExpressions;
@@ -51,7 +50,7 @@ namespace TenantManager
 
         private static void Configure()
         {
-            Console.WriteLine($"Configuration.Name: {Configuration.Name}");
+            Console.WriteLine($"Configuration.AzureStorageConnectionString: {Configuration.AzureStorageConnectionString}");
         }
 
         private static void GreetUser()
@@ -243,9 +242,11 @@ namespace TenantManager
                 Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
                 string password = Console.ReadLine();
 
-                GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string systemOfMeasurementName);
-
-                int dataOption = GetDataOptionFromUser();
+                // Hard-code SystemOfMeasurement user option until Menominee needs it
+                //GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string systemOfMeasurementName);
+                int systemOfMeasurement = 1;
+                string systemOfMeasurementName = "English";
+                int dataOption = 1; //GetDataOptionFromUser();
 
                 Console.WriteLine();
                 Console.WriteLine($"Creating: {databaseName} using {systemOfMeasurementName} system of measurement");
