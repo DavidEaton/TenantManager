@@ -20,7 +20,7 @@ namespace TenantManager
             Shard shard = CreateOrGetEmptyShard(shardMap, databaseName, dataOption, systemOfMeasurement);
             int currentMaxHighKey;
             int defaultNewHighKey;
-            // Here we assume that the points start at 0, are contiguous, 
+            // Here we assume that the points start at 0, are contiguous,
             // and are bounded (i.e. there is no point where HighIsMax == true)
             try
             {
@@ -49,7 +49,7 @@ namespace TenantManager
 
         /// <summary>
         /// Creates a new shard, or gets an existing empty shard (i.e. a shard that has no mappings).
-        /// The reason why an empty shard might exist is that it was created and initialized but we 
+        /// The reason why an empty shard might exist is that it was created and initialized but we
         /// failed to create a mapping to it.
         /// </summary>
         private static Shard CreateOrGetEmptyShard(ListShardMap<int> shardMap,
@@ -57,6 +57,9 @@ namespace TenantManager
                                                     int dataOption,
                                                     int systemOfMeasurement)
         {
+
+            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+
             // Get an empty shard if one already exists, otherwise create a new one
             Shard shard = FindEmptyShard(shardMap);
             if (shard == null)
@@ -64,26 +67,26 @@ namespace TenantManager
                 // No empty shard exists, so create one
                 // Only create the database if it doesn't already exist. It might already exist if
                 // we tried to create it previously but hit a transient fault.
-                if (!SqlDatabaseUtils.DatabaseExists(Configuration.ServerName, databaseName))
+                if (!SqlDatabaseUtils.DatabaseExists(serverName, databaseName))
                 {
-                    SqlDatabaseUtils.CreateDatabase(Configuration.ServerName, databaseName);
+                    SqlDatabaseUtils.CreateDatabase(serverName, databaseName);
                 }
 
                 // Create schema and populate reference data on that database
                 // The initialize script must be idempotent, in case it was already run on this database
                 // and we failed to add it to the shard map previously
-                SqlDatabaseUtils.ExecuteSqlScript(Configuration.ServerName, databaseName, InitializeShardScriptFile);
-                SqlDatabaseUtils.ExecuteSqlScript(Configuration.ServerName, databaseName,
+                SqlDatabaseUtils.ExecuteSqlScript(serverName, databaseName, InitializeShardScriptFile);
+                SqlDatabaseUtils.ExecuteSqlScript(serverName, databaseName,
                     systemOfMeasurement == 1 ? InsertRequiredDatabaseRowsScriptFileEnglish : InsertRequiredDatabaseRowsScriptFileMetric);
 
                 if (dataOption == 2)
                 {
                     // User elected to populate database with demo rows
                     string demoFile = systemOfMeasurement == 1 ? InsertDemoDatabaseRowsScriptFileEnglish : InsertDemoDatabaseRowsScriptFileMetric;
-                    SqlDatabaseUtils.ExecuteSqlScript(Configuration.ServerName, databaseName, demoFile);
+                    SqlDatabaseUtils.ExecuteSqlScript(serverName, databaseName, demoFile);
                 }
                 // Add it to the shard map
-                ShardLocation shardLocation = new ShardLocation(Configuration.ServerName, databaseName);
+                ShardLocation shardLocation = new ShardLocation(serverName, databaseName);
                 shard = ShardManagementUtils.CreateOrGetShard(shardMap, shardLocation);
             }
 

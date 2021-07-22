@@ -24,8 +24,6 @@ namespace TenantManager
 
         public static void Main()
         {
-            Configure();
-
             GreetUser();
 
             // Verify that we can connect to the Sql Database that is specified in App.config settings
@@ -48,11 +46,6 @@ namespace TenantManager
             MenuLoop();
         }
 
-        private static void Configure()
-        {
-            Console.WriteLine($"Configuration.AzureStorageConnectionString: {Configuration.AzureStorageConnectionString}");
-        }
-
         private static void GreetUser()
         {
             Console.WriteLine("***********************************************************");
@@ -71,9 +64,11 @@ namespace TenantManager
         /// </summary>
         private static void MenuLoop()
         {
+            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+
             // Get the shard map manager, if it already exists.
             shardMapManager = ShardManagementUtils.TryGetShardMapManager(
-                Configuration.ServerName,
+                serverName,
                 Configuration.ShardMapManagerDatabaseName);
 
             userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
@@ -198,6 +193,8 @@ namespace TenantManager
         /// </summary>
         private static void CreateShardMapManagerAndShard()
         {
+            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+
             if (shardMapManager != null)
             {
                 ConsoleUtils.WriteWarning("Shard Map Manager already exists");
@@ -205,15 +202,15 @@ namespace TenantManager
             }
 
             // Create shard map manager database
-            if (!SqlDatabaseUtils.DatabaseExists(Configuration.ServerName, Configuration.ShardMapManagerDatabaseName))
+            if (!SqlDatabaseUtils.DatabaseExists(serverName, Configuration.ShardMapManagerDatabaseName))
             {
-                SqlDatabaseUtils.CreateDatabase(Configuration.ServerName, Configuration.ShardMapManagerDatabaseName);
+                SqlDatabaseUtils.CreateDatabase(serverName, Configuration.ShardMapManagerDatabaseName);
             }
 
             bool isIdentity = true;
             string shardMapManagerConnectionString =
                     Configuration.GetConnectionString(
-                        Configuration.ServerName,
+                        serverName,
                         Configuration.ShardMapManagerDatabaseName,
                         isIdentity);
 
@@ -351,6 +348,10 @@ namespace TenantManager
 
         private static bool DeleteTenantDatabase(string tenantName)
         {
+            string serverName = Configuration.IsDevelopment
+                ? Configuration.AppServerNameDevelopment
+                : Configuration.AppServerNameProduction;
+
             ConsoleUtils.WriteColor(DangerColor, "WARNING: DATABASE WILL BE DELETED AND NOT RECOVERABLE.");
             Console.WriteLine($"Please enter 'YES' to confirm deletion of '{tenantName}' database");
             string confirm = Console.ReadLine();
@@ -359,7 +360,7 @@ namespace TenantManager
                 return false;
 
             ListShardMap<int> shardMap = TryGetListShardMap();
-            ShardLocation shardLocation = new ShardLocation(Configuration.ServerName, tenantName);
+            ShardLocation shardLocation = new ShardLocation(serverName, tenantName);
             bool shardExists = shardMap.TryGetShard(shardLocation, out Shard shard);
 
             if (shardExists)

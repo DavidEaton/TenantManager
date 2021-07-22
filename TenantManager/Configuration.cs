@@ -11,17 +11,17 @@ namespace TenantManager
         /// <summary>
         /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
         /// </summary>
-        public static string ServerName
+        public static string AppServerNameProduction
         {
-            get { return ConfigurationManager.AppSettings["ServerName"]; }
+            get { return ConfigurationManager.AppSettings["AppServerNameProduction"]; }
         }
 
         /// <summary>
         /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
         /// </summary>
-        public static string Name
+        public static string AppServerNameDevelopment
         {
-            get { return ConfigurationManager.AppSettings["Name"]; }
+            get { return ConfigurationManager.AppSettings["AppServerNameDevelopment"]; }
         }
 
         /// <summary>
@@ -43,9 +43,17 @@ namespace TenantManager
         /// <summary>
         /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
         /// </summary>
-        public static string IdentityTenantsServerName
+        public static string IdentityTenantsServerNameDevelopment
         {
-            get { return ConfigurationManager.AppSettings["IdentityTenantsServerName"]; }
+            get { return ConfigurationManager.AppSettings["IdentityTenantsServerNameDevelopment"]; }
+        }
+
+        /// <summary>
+        /// Gets the server name for the Shard Map Manager database, which contains the shard maps.
+        /// </summary>
+        public static string IdentityTenantsServerNameProduction
+        {
+            get { return ConfigurationManager.AppSettings["IdentityTenantsServerNameProduction"]; }
         }
 
         /// <summary>

@@ -26,9 +26,11 @@ namespace TenantManager
 		/// </summary>
 		public static bool TryConnectToSqlDatabase()
 		{
+			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+
 			string connectionString =
 				Configuration.GetConnectionString(
-					Configuration.ServerName,
+					serverName,
 					MasterDatabaseName,
 					isNotIdentity);
 
@@ -118,8 +120,8 @@ namespace TenantManager
 						{
 							if (Configuration.UseElasticPool)
 							{
-							// Begin creation (which is async for Standard/Premium editions)
-							cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
+								// Begin creation (which is async for Standard/Premium editions)
+								cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
 							}
 							else
 							{
@@ -188,13 +190,15 @@ namespace TenantManager
 		/// </summary>
 		public static Guid TryGetShardId(string databaseName)
 		{
+			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+
 			string shardMapManagerConnectionString =
 					Configuration.GetConnectionString(
-						Configuration.ServerName,
+						serverName,
 						Configuration.ShardMapManagerDatabaseName,
 						isNotIdentity);
 
-			if (!DatabaseExists(Configuration.ServerName, databaseName))
+			if (!DatabaseExists(serverName, databaseName))
 			{
 				// database does not exist so return a new Guid, initialied with all 0s.
 				return new Guid();
@@ -202,7 +206,7 @@ namespace TenantManager
 
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 				Configuration.GetConnectionString(
-					Configuration.ServerName,
+					serverName,
 					Configuration.ShardMapManagerDatabaseName,
 					isNotIdentity),
 				SqlRetryPolicy,
@@ -224,7 +228,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						Configuration.IdentityTenantsServerName,
+						GetIdentityTenantsServerName(),
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -295,7 +299,7 @@ namespace TenantManager
 			ConsoleUtils.WriteInfo("Creating new Tenant {0}", databaseName);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						Configuration.IdentityTenantsServerName,
+						GetIdentityTenantsServerName(),
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -323,7 +327,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						Configuration.IdentityTenantsServerName,
+						GetIdentityTenantsServerName(),
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -346,7 +350,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						Configuration.IdentityTenantsServerName,
+						GetIdentityTenantsServerName(),
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -367,15 +371,11 @@ namespace TenantManager
 
 		internal static bool DeleteShard(string tenantName)
 		{
-			//string shardMapManagerConnectionString =
-			//		Configuration.GetConnectionString(
-			//			Configuration.ServerName,
-			//			Configuration.ShardMapManagerDatabaseName,
-			//			isNotIdentity);
+			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
 
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 				Configuration.GetConnectionString(
-					Configuration.ServerName,
+					serverName,
 					Configuration.ShardMapManagerDatabaseName,
 					isNotIdentity),
 				SqlRetryPolicy,
@@ -411,10 +411,14 @@ namespace TenantManager
 
 		public static List<string> GetAllTenantUserLookups()
 		{
+			string serverName = Configuration.IsDevelopment
+				? Configuration.IdentityTenantsServerNameDevelopment
+				: Configuration.IdentityTenantsServerNameProduction;
+
 			List<string> userNames = new List<string>();
 
 			using (SqlConnection connection = new SqlConnection(Configuration.GetConnectionString(
-						Configuration.IdentityTenantsServerName,
+						serverName,
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity)))
 			{
@@ -507,6 +511,12 @@ namespace TenantManager
 			{
 				return new RetryPolicy<ExtendedSqlDatabaseTransientErrorDetectionStrategy>(10, TimeSpan.FromSeconds(5));
 			}
+		}
+		private static string GetIdentityTenantsServerName()
+		{
+			return Configuration.IsDevelopment
+							  ? Configuration.IdentityTenantsServerNameDevelopment
+							  : Configuration.IdentityTenantsServerNameProduction;
 		}
 
 		/// <summary>
