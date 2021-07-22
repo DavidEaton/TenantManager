@@ -64,13 +64,7 @@ namespace TenantManager
         /// </summary>
         private static void MenuLoop()
         {
-            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
-
-            // Get the shard map manager, if it already exists.
-            shardMapManager = ShardManagementUtils.TryGetShardMapManager(
-                serverName,
-                Configuration.ShardMapManagerDatabaseName);
-
+            shardMapManager = ShardManagementUtils.TryGetShardMapManager();
             userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
 
             // Loop until the user chose "Exit".

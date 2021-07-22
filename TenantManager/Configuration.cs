@@ -124,14 +124,13 @@ namespace TenantManager
         /// </summary>
         public static string GetConnectionString(string serverName, string database, bool isIdentity)
         {
-             GetCredentials(out string userId, out string password, out string userIdentityId, out string passwordIdentity);
 
             SqlConnectionStringBuilder connStr = new SqlConnectionStringBuilder
             {
                 DataSource = serverName,
                 InitialCatalog = database,
-                UserID = isIdentity ? userIdentityId : userId,
-                Password = isIdentity ? passwordIdentity : password,
+                UserID = isIdentity ? Credentials.UserNameIdentityUsers : Credentials.UserName,
+                Password = isIdentity ? Credentials.PasswordIdentityUsers : Credentials.Password,
                 IntegratedSecurity = IsDevelopment,
                 ApplicationName = "Tenant Manager v1.0",
                 ConnectTimeout = 30
@@ -140,21 +139,31 @@ namespace TenantManager
             return connStr.ToString();
         }
 
-        private static void GetCredentials(out string userId, out string password, out string userIdentityId, out string passwordIdentity)
+        private static class Credentials
         {
-            // Production Settings
-                userId = null;
-                password = null;
-                userIdentityId = null;
-                passwordIdentity = null;
+            public static string UserName => GetUserName();
+            public static string Password => GetPassword();
+            public static string UserNameIdentityUsers => GetUserNameIdentityUsers();
+            public static string PasswordIdentityUsers => GetPasswordIdentityUsers();
 
-            // Development Settings
-            if (IsDevelopment)
+            private static string GetUserName()
             {
-                userId = ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
-                password = ConfigurationManager.AppSettings["Password"] ?? string.Empty;
-                userIdentityId = ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
-                passwordIdentity = ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
+                return ConfigurationManager.AppSettings["UserName"] ?? string.Empty;
+            }
+
+            private static string GetPassword()
+            {
+                return ConfigurationManager.AppSettings["Password"] ?? string.Empty;
+            }
+
+            private static string GetUserNameIdentityUsers()
+            {
+                return ConfigurationManager.AppSettings["UserNameIdentityUsers"] ?? string.Empty;
+            }
+
+            private static string GetPasswordIdentityUsers()
+            {
+                return ConfigurationManager.AppSettings["PasswordIdentityUsers"] ?? string.Empty;
             }
         }
     }

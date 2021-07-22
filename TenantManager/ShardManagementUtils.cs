@@ -4,33 +4,32 @@ namespace TenantManager
 {
     internal static class ShardManagementUtils
     {
-        static bool isNotIdentity = false;
+        static bool isIdentity = true;
         /// <summary>
         /// Tries to get the ShardMapManager that is stored in the specified database.
         /// </summary>
-        public static ShardMapManager TryGetShardMapManager(string shardMapManagerServerName, string shardMapManagerDatabaseName)
+        public static ShardMapManager TryGetShardMapManager()
         {
-            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+            string shardMapManagerServerName = Configuration.IsDevelopment ? Configuration.IdentityTenantsServerNameProduction : Configuration.IdentityTenantsServerNameProduction;
 
             string shardMapManagerConnectionString =
                     Configuration.GetConnectionString(
-                        serverName,
+                        shardMapManagerServerName,
                         Configuration.ShardMapManagerDatabaseName,
-                        isNotIdentity);
+                        isIdentity);
 
-            if (!SqlDatabaseUtils.DatabaseExists(shardMapManagerServerName, shardMapManagerDatabaseName))
+            if (!SqlDatabaseUtils.DatabaseExists(shardMapManagerServerName, Configuration.ShardMapManagerDatabaseName))
             {
                 // Shard Map Manager database has not yet been created
                 return null;
             }
 
-            ShardMapManager shardMapManager;
-            bool smmExists = ShardMapManagerFactory.TryGetSqlShardMapManager(
+            bool shardMapManagerExists = ShardMapManagerFactory.TryGetSqlShardMapManager(
                 shardMapManagerConnectionString,
                 ShardMapManagerLoadPolicy.Lazy,
-                out shardMapManager);
+                out ShardMapManager shardMapManager);
 
-            if (!smmExists)
+            if (!shardMapManagerExists)
             {
                 // Shard Map Manager database exists, but Shard Map Manager has not been created
                 return null;

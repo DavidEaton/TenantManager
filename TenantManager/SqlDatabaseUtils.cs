@@ -18,21 +18,21 @@ namespace TenantManager
 		/// SQL master database name.
 		/// </summary>
 		public const string MasterDatabaseName = "master";
-		static bool isIdentity = true;
-		static bool isNotIdentity = false;
-
+		static readonly bool isIdentity = true;
+		static readonly string appServerName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+		private static readonly string identityTenantsServerName = Configuration.IsDevelopment
+							  ? Configuration.IdentityTenantsServerNameDevelopment
+							  : Configuration.IdentityTenantsServerNameProduction;
 		/// <summary>
 		/// Returns true if we can connect to the database.
 		/// </summary>
 		public static bool TryConnectToSqlDatabase()
 		{
-			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
-
 			string connectionString =
 				Configuration.GetConnectionString(
-					serverName,
+					appServerName,
 					MasterDatabaseName,
-					isNotIdentity);
+					!isIdentity);
 
 			try
 			{
@@ -58,7 +58,7 @@ namespace TenantManager
 		public static bool DatabaseExists(string server, string db)
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
+				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -78,7 +78,7 @@ namespace TenantManager
 		public static bool DatabaseIsOnline(string server, string db)
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
+				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -99,7 +99,7 @@ namespace TenantManager
 		{
 			ConsoleUtils.WriteInfo("Creating database {0}", db);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
+				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -154,7 +154,7 @@ namespace TenantManager
 		{
 			ConsoleUtils.WriteInfo("Deleting database '{0}'", db);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, isNotIdentity),
+				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -190,25 +190,23 @@ namespace TenantManager
 		/// </summary>
 		public static Guid TryGetShardId(string databaseName)
 		{
-			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+			//string shardMapManagerConnectionString =
+			//		Configuration.GetConnectionString(
+			//			appServerName,
+			//			Configuration.ShardMapManagerDatabaseName,
+			//			!isIdentity);
 
-			string shardMapManagerConnectionString =
-					Configuration.GetConnectionString(
-						serverName,
-						Configuration.ShardMapManagerDatabaseName,
-						isNotIdentity);
-
-			if (!DatabaseExists(serverName, databaseName))
+			if (!DatabaseExists(appServerName, databaseName))
 			{
-				// database does not exist so return a new Guid, initialied with all 0s.
+				// Database does not exist so return a new default Guid (initialied with all 0s).
 				return new Guid();
 			}
 
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 				Configuration.GetConnectionString(
-					serverName,
+					appServerName,
 					Configuration.ShardMapManagerDatabaseName,
-					isNotIdentity),
+					!isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -228,7 +226,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						GetIdentityTenantsServerName(),
+						identityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -299,7 +297,7 @@ namespace TenantManager
 			ConsoleUtils.WriteInfo("Creating new Tenant {0}", databaseName);
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						GetIdentityTenantsServerName(),
+						identityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -327,7 +325,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						GetIdentityTenantsServerName(),
+						identityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -350,7 +348,7 @@ namespace TenantManager
 		{
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
 					Configuration.GetConnectionString(
-						GetIdentityTenantsServerName(),
+						identityTenantsServerName,
 						Configuration.IdentityTenantsDatabaseName,
 						isIdentity),
 					SqlRetryPolicy,
@@ -377,7 +375,7 @@ namespace TenantManager
 				Configuration.GetConnectionString(
 					serverName,
 					Configuration.ShardMapManagerDatabaseName,
-					isNotIdentity),
+					!isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -451,7 +449,7 @@ namespace TenantManager
 		{
 			ConsoleUtils.WriteInfo($"Executing script {scriptFile}");
 			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, db, isNotIdentity),
+				Configuration.GetConnectionString(server, db, !isIdentity),
 				SqlRetryPolicy,
 				SqlRetryPolicy))
 			{
@@ -512,12 +510,12 @@ namespace TenantManager
 				return new RetryPolicy<ExtendedSqlDatabaseTransientErrorDetectionStrategy>(10, TimeSpan.FromSeconds(5));
 			}
 		}
-		private static string GetIdentityTenantsServerName()
-		{
-			return Configuration.IsDevelopment
-							  ? Configuration.IdentityTenantsServerNameDevelopment
-							  : Configuration.IdentityTenantsServerNameProduction;
-		}
+		//private static string GetIdentityTenantsServerName()
+		//{
+		//	return Configuration.IsDevelopment
+		//					  ? Configuration.IdentityTenantsServerNameDevelopment
+		//					  : Configuration.IdentityTenantsServerNameProduction;
+		//}
 
 		/// <summary>
 		/// Extended sql transient error detection strategy that performs additional transient error
