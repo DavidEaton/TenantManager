@@ -10,7 +10,7 @@ namespace TenantManager
         /// </summary>
         public static ShardMapManager TryGetShardMapManager()
         {
-            string shardMapManagerServerName = Configuration.IsDevelopment ? Configuration.IdentityTenantsServerNameProduction : Configuration.IdentityTenantsServerNameProduction;
+            string shardMapManagerServerName = Configuration.IsDevelopment ? Configuration.IdentityTenantsServerNameDevelopment : Configuration.IdentityTenantsServerNameProduction;
 
             string shardMapManagerConnectionString =
                     Configuration.GetConnectionString(
