@@ -237,7 +237,13 @@ namespace TenantManager
                 //GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string systemOfMeasurementName);
                 int systemOfMeasurement = 1;
                 string systemOfMeasurementName = "English";
-                int dataOption = 1; //GetDataOptionFromUser();
+
+                Console.WriteLine("1. Create blank database");
+                Console.WriteLine("2. Create demo database");
+
+                int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+                while (dataOption < 0 || dataOption > 2)
+                    dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
 
                 Console.WriteLine();
                 Console.WriteLine($"Creating: {databaseName} using {systemOfMeasurementName} system of measurement");
