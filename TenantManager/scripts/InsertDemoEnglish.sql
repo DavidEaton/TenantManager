@@ -1,50 +1,40 @@
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Birthday', N'CustomerType', N'DlExpires', N'DlState', N'DriversLicence', N'EMailPrimary', N'EMailSecondary', N'FirstName', N'Gender', N'LastName', N'MiddleName', N'PhonePrimary', N'PhoneSecondary') AND [object_id] = OBJECT_ID(N'[Person]'))
-    SET IDENTITY_INSERT [Person] ON;
-INSERT INTO [Person] ([Id], [Birthday], [CustomerType], [DlExpires], [DlState], [DriversLicence], [EMailPrimary], [EMailSecondary], [FirstName], [Gender], [LastName], [MiddleName], [PhonePrimary], [PhoneSecondary])
-VALUES (1, '1985-09-28T00:00:00.0000000-04:00', 0, '2021-09-28T00:00:00.0000000-04:00', N'MI', N'E350 844 25414', N'jb@moops.com', NULL, N'Jerry', N'M', N'Berry', N'Cherry', NULL, NULL);
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Birthday', N'CustomerType', N'DlExpires', N'DlState', N'DriversLicence', N'EMailPrimary', N'EMailSecondary', N'FirstName', N'Gender', N'LastName', N'MiddleName', N'PhonePrimary', N'PhoneSecondary') AND [object_id] = OBJECT_ID(N'[Person]'))
-    SET IDENTITY_INSERT [Person] OFF;
-
+SET IDENTITY_INSERT [dbo].[Person] ON
 GO
-
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Birthday', N'CustomerType', N'DlExpires', N'DlState', N'DriversLicence', N'EMailPrimary', N'EMailSecondary', N'FirstName', N'Gender', N'LastName', N'MiddleName', N'PhonePrimary', N'PhoneSecondary') AND [object_id] = OBJECT_ID(N'[Person]'))
-    SET IDENTITY_INSERT [Person] ON;
-INSERT INTO [Person] ([Id], [Birthday], [CustomerType], [DlExpires], [DlState], [DriversLicence], [EMailPrimary], [EMailSecondary], [FirstName], [Gender], [LastName], [MiddleName], [PhonePrimary], [PhoneSecondary])
-VALUES (2, '1988-08-05T00:00:00.0000000-04:00', 0, '2022-09-28T00:00:00.0000000-04:00', N'MI', N'Z340 233 26648', N'mm@moops.com', NULL, N'Molly', N'F', N'Moops', N'Marie', NULL, NULL);
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Birthday', N'CustomerType', N'DlExpires', N'DlState', N'DriversLicence', N'EMailPrimary', N'EMailSecondary', N'FirstName', N'Gender', N'LastName', N'MiddleName', N'PhonePrimary', N'PhoneSecondary') AND [object_id] = OBJECT_ID(N'[Person]'))
-    SET IDENTITY_INSERT [Person] OFF;
-
+INSERT [dbo].[Person] ([Id], [LastName], [FirstName], [MiddleName], [Gender], [Birthday], [DriversLicenseNumber], [DriversLicenseIssued], [DriversLicenseExpiry], [DriversLicenseState], [AddressLine], [AddressCity], [AddressState], [AddressPostalCode]) VALUES (1, N'Smith', N'Steve', NULL, 0, CAST(N'1985-09-28T00:00:00.0000000' AS DateTime2), N'E350 844 25414', CAST(N'2020-09-28T00:00:00.0000000' AS DateTime2), CAST(N'2021-09-28T00:00:00.0000000' AS DateTime2), N'NE', N'123 Four Ave', N'City', N'NE', N'74444')
 GO
-
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Apartment', N'City', N'CountryCode', N'PersonId', N'PostalCode', N'State', N'Street1', N'Street2') AND [object_id] = OBJECT_ID(N'[Address]'))
-    SET IDENTITY_INSERT [Address] ON;
-INSERT INTO [Address] ([Id], [Apartment], [City], [CountryCode], [PersonId], [PostalCode], [State], [Street1], [Street2])
-VALUES (1, N'C3', N'Gaylord', N'US', 1, N'49735', N'MI', N'1234 Five Ave.', NULL);
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Apartment', N'City', N'CountryCode', N'PersonId', N'PostalCode', N'State', N'Street1', N'Street2') AND [object_id] = OBJECT_ID(N'[Address]'))
-    SET IDENTITY_INSERT [Address] OFF;
-
+INSERT [dbo].[Person] ([Id], [LastName], [FirstName], [MiddleName], [Gender], [Birthday], [DriversLicenseNumber], [DriversLicenseIssued], [DriversLicenseExpiry], [DriversLicenseState], [AddressLine], [AddressCity], [AddressState], [AddressPostalCode]) VALUES (2, N'Jones', N'Jane', N'J', 1, NULL, N'Z00 21 5636155', CAST(N'2019-09-28T00:00:00.0000000' AS DateTime2), CAST(N'2020-09-28T00:00:00.0000000' AS DateTime2), N'MI', N'321 Zero Street', N'Town', N'MI', N'68555')
 GO
-
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Apartment', N'City', N'CountryCode', N'PersonId', N'PostalCode', N'State', N'Street1', N'Street2') AND [object_id] = OBJECT_ID(N'[Address]'))
-    SET IDENTITY_INSERT [Address] ON;
-INSERT INTO [Address] ([Id], [Apartment], [City], [CountryCode], [PersonId], [PostalCode], [State], [Street1], [Street2])
-VALUES (2, N'P0', N'Gaylord', N'US', 2, N'49735', N'MI', N'5431 One Street', NULL);
-IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Apartment', N'City', N'CountryCode', N'PersonId', N'PostalCode', N'State', N'Street1', N'Street2') AND [object_id] = OBJECT_ID(N'[Address]'))
-    SET IDENTITY_INSERT [Address] OFF;
-
+SET IDENTITY_INSERT [dbo].[Person] OFF
 GO
-
-
-UPDATE [Person] SET [Birthday] = '1985-09-29T00:00:00.0000000-04:00', [DlExpires] = '2021-09-29T00:00:00.0000000-04:00', [PhonePrimary] = N'9893501234'
-WHERE [Id] = 1;
-SELECT @@ROWCOUNT;
-
-
+SET IDENTITY_INSERT [dbo].[Organization] ON
 GO
-
-UPDATE [Person] SET [Birthday] = '1988-08-06T00:00:00.0000000-04:00', [DlExpires] = '2022-09-29T00:00:00.0000000-04:00', [PhonePrimary] = N'2316453210'
-WHERE [Id] = 2;
-SELECT @@ROWCOUNT;
-
-
+INSERT [dbo].[Organization] ([Id], [Name], [ContactId], [AddressLine], [AddressCity], [AddressState], [AddressPostalCode], [Note]) VALUES (1, N'WalMart', 1, N'555 Never Road', N'Metropolis', N'MI', N'68555', N'some notes regarding WalMart')
+GO
+INSERT [dbo].[Organization] ([Id], [Name], [ContactId], [AddressLine], [AddressCity], [AddressState], [AddressPostalCode], [Note]) VALUES (2, N'Kinkos', NULL, N'111 End Lane', N'Tinyton', N'MI', N'68222', N'another note')
+GO
+SET IDENTITY_INSERT [dbo].[Organization] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Customer] ON
+GO
+INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [Created], [OrganizationId], [PersonId]) VALUES (2, 0, 0, 1, 1, CAST(N'2021-08-18T00:00:00.0000000' AS DateTime2), 1, NULL)
+GO
+INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [Created], [OrganizationId], [PersonId]) VALUES (3, 0, 0, 0, 1, CAST(N'2021-08-01T00:00:00.0000000' AS DateTime2), NULL, 1)
+GO
+SET IDENTITY_INSERT [dbo].[Customer] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Email] ON
+GO
+INSERT [dbo].[Email] ([Id], [Address], [IsPrimary], [OrganizationId], [PersonId]) VALUES (1, N'ss@ssmith.com', 1, NULL, 1)
+GO
+INSERT [dbo].[Email] ([Id], [Address], [IsPrimary], [OrganizationId], [PersonId]) VALUES (2, N'wally@walmart.com', 1, 1, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[Email] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Phone] ON
+GO
+INSERT [dbo].[Phone] ([Id], [Number], [PhoneType], [IsPrimary], [OrganizationId], [PersonId]) VALUES (1, N'9896279206', 3, 1, NULL, 1)
+GO
+INSERT [dbo].[Phone] ([Id], [Number], [PhoneType], [IsPrimary], [OrganizationId], [PersonId]) VALUES (2, N'2315559999', 2, 1, 1, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[Phone] OFF
 GO
