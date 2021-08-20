@@ -238,12 +238,7 @@ namespace TenantManager
                 int systemOfMeasurement = 1;
                 string systemOfMeasurementName = "English";
 
-                Console.WriteLine("1. Create blank database");
-                Console.WriteLine("2. Create demo database");
-
-                int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-                while (dataOption < 0 || dataOption > 2)
-                    dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+                int dataOption = GetDataOptionFromUser();
 
                 Console.WriteLine();
                 Console.WriteLine($"Creating: {databaseName} using {systemOfMeasurementName} system of measurement");
@@ -291,16 +286,48 @@ namespace TenantManager
             Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
             Console.WriteLine("Your entry will be displayed when users from this company are logged in to the web client.");
             string companyName = Console.ReadLine();
+
             return companyName;
+        }
+
+        private static bool DatabaseNameIsValid(string companyName)
+        {
+            var shardMap = TryGetListShardMap();
+            if (shardMap == null)
+            {
+                return true;
+            }
+            var allShards = shardMap.GetShards();
+
+            var database = allShards.FirstOrDefault(shard => shard.Location.Database.Contains(companyName));
+
+
+            return database is null;
         }
 
         private static string GetDatabaseNameFromUser()
         {
             Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
             Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
-            string databaseName = Console.ReadLine().ToLower();
-            databaseName = Regex.Replace(databaseName, @"\s", "");
-            return databaseName;
+
+            while (true)
+            {
+                string databaseName = Console.ReadLine().ToLower();
+
+                databaseName = Regex.Replace(databaseName, @"\s", "");
+                databaseName = databaseName.Trim();
+
+                bool valid = DatabaseNameIsValid(databaseName);
+
+                switch (valid)
+                {
+                    case true:
+                        return databaseName;
+                    case false:
+                        ConsoleUtils.WriteColor(DangerColor, $"Name '{databaseName}' in use. Please enter a different name.");
+                        break;
+                }
+            }
         }
 
         private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)

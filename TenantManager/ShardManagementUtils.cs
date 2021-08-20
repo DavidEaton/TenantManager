@@ -4,7 +4,7 @@ namespace TenantManager
 {
     internal static class ShardManagementUtils
     {
-        static bool isIdentity = true;
+        static bool isIdentity = false;
         /// <summary>
         /// Tries to get the ShardMapManager that is stored in the specified database.
         /// </summary>
