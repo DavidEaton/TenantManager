@@ -139,6 +139,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShardManagementUtils.cs" />
     <Compile Include="SqlDatabaseUtils.cs" />
+    <Compile Include="Enums\UserProperty.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

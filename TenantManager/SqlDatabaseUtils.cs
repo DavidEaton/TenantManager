@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using System.Threading;
+using TenantManager.Enums;
 
 namespace TenantManager
 {
@@ -407,7 +408,17 @@ namespace TenantManager
 			}
 		}
 
-		public static List<string> GetAllTenantUserLookups()
+		public static List<string> GetAllTenantUserNames()
+		{
+			return GetTenantUserProperty(UserProperty.UserName);
+		}
+
+		public static List<string> GetAllTenantUserEmails()
+		{
+			return GetTenantUserProperty(UserProperty.Email);
+		}
+
+		private static List<string> GetTenantUserProperty(UserProperty property)
 		{
 			string serverName = Configuration.IsDevelopment
 				? Configuration.IdentityTenantsServerNameDevelopment
@@ -423,7 +434,7 @@ namespace TenantManager
 				try
 				{
 					connection.Open();
-					string query = "SELECT [UserName] FROM [dbo].[AspNetUsers]";
+					string query = $"SELECT [{property}] FROM [dbo].[AspNetUsers] WHERE [{property}] IS NOT NULL;";
 					using (SqlCommand command = new SqlCommand(query, connection))
 					{
 						using (SqlDataReader reader = command.ExecuteReader())

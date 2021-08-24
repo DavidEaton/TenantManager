@@ -65,7 +65,7 @@ namespace TenantManager
         private static void MenuLoop()
         {
             shardMapManager = ShardManagementUtils.TryGetShardMapManager();
-            userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
+            userNames = SqlDatabaseUtils.GetAllTenantUserNames();
 
             // Loop until the user chose "Exit".
             bool continueLoop;
@@ -225,9 +225,7 @@ namespace TenantManager
 
                 string companyName = GetCompanyNameFromUser();
 
-                // TODO: Email Validation
-                Console.WriteLine("Please enter the Admin user's Email.");
-                string email = Console.ReadLine();
+                string email = GetAdminEmailFromUser(companyName);
 
                 // TODO: Password Validation
                 Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
@@ -264,6 +262,51 @@ namespace TenantManager
                 if (!Configuration.IsDevelopment)
                     AzureStorageUtils.CreateTenantStorageContainer(databaseName);
             }
+        }
+
+        private static string GetAdminEmailFromUser(string companyName)
+        {
+            Console.WriteLine($"Please enter the Admin user's Email for {companyName}.");
+
+            string validEmail = string.Empty;
+            bool emailIsValid = false;
+
+            while (!emailIsValid)
+            {
+                string email = Console.ReadLine();
+
+                email = (email ?? string.Empty).Trim();
+
+                if (email.Length == 0)
+                {
+                    Console.WriteLine("Email cannot be empty.");
+                    Console.WriteLine("Please try again.");
+                    GetAdminEmailFromUser(companyName);
+                }
+
+                if (!Regex.IsMatch(email, @"^(.+)@(.+)$"))
+                {
+                    Console.WriteLine($"'{email}' is not a valid email");
+                    Console.WriteLine("Please try again.");
+                    GetAdminEmailFromUser(companyName);
+                }
+
+                var existingEmails = SqlDatabaseUtils.GetAllTenantUserEmails();
+
+                if (existingEmails.Contains(email))
+                {
+                    Console.WriteLine($"Email {email} is already in use.");
+                    Console.WriteLine("Please try again.");
+                    GetAdminEmailFromUser(companyName);
+                }
+                else
+                {
+                    emailIsValid = true;
+                    validEmail = email;
+                }
+            }
+
+            return validEmail;
         }
 
         private static int GetDataOptionFromUser()
@@ -334,7 +377,7 @@ namespace TenantManager
                     SqlDatabaseUtils.DeleteShard(tenantName);
 
                     if (SqlDatabaseUtils.DeleteTenantUsers(tenantName))
-                        userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
+                        userNames = SqlDatabaseUtils.GetAllTenantUserNames();
 
                     SqlDatabaseUtils.DeleteTenant(tenantName);
                     AzureStorageUtils.DeleteTenantStorageContainer(tenantName);
