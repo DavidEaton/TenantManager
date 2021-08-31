@@ -13,11 +13,11 @@ namespace TenantManager
         /// </summary>
         public static void CreateShard(ListShardMap<int> shardMap,
                                         string databaseName,
-                                        int dataOption,
+                                        bool includeDemoData,
                                         int systemOfMeasurement)
         {
             // Create a new shard, or get an existing empty shard (if a previous create partially succeeded).
-            Shard shard = CreateOrGetEmptyShard(shardMap, databaseName, dataOption, systemOfMeasurement);
+            Shard shard = CreateOrGetEmptyShard(shardMap, databaseName, includeDemoData, systemOfMeasurement);
             int currentMaxHighKey;
             int defaultNewHighKey;
             // Here we assume that the points start at 0, are contiguous,
@@ -54,7 +54,7 @@ namespace TenantManager
         /// </summary>
         private static Shard CreateOrGetEmptyShard(ListShardMap<int> shardMap,
                                                     string databaseName,
-                                                    int dataOption,
+                                                    bool includeDemoData,
                                                     int systemOfMeasurement)
         {
 
@@ -79,7 +79,7 @@ namespace TenantManager
                 SqlDatabaseUtils.ExecuteSqlScript(serverName, databaseName,
                     systemOfMeasurement == 1 ? InsertRequiredDatabaseRowsScriptFileEnglish : InsertRequiredDatabaseRowsScriptFileMetric);
 
-                if (dataOption == 2)
+                if (includeDemoData)
                 {
                     // User elected to populate database with demo rows
                     string demoFile = systemOfMeasurement == 1 ? InsertDemoDatabaseRowsScriptFileEnglish : InsertDemoDatabaseRowsScriptFileMetric;

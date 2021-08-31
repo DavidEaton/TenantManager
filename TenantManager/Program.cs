@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement;
 using System.Text.RegularExpressions;
 using Microsoft.AspNet.Identity;
+using TenantManager.Enums;
 
 namespace TenantManager
 {
@@ -65,7 +66,7 @@ namespace TenantManager
         private static void MenuLoop()
         {
             shardMapManager = ShardManagementUtils.TryGetShardMapManager();
-            userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
+            userNames = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.UserName.ToString());
 
             // Loop until the user chose "Exit".
             bool continueLoop;
@@ -221,13 +222,11 @@ namespace TenantManager
             ListShardMap<int> shardMap = TryGetListShardMap();
             if (shardMap != null)
             {
-                string databaseName = GetDatabaseNameFromUser();
+                string databaseName = GetDatabaseNameInput();
 
-                string companyName = GetCompanyNameFromUser();
+                string companyName = GetCompanyNameInput();
 
-                // TODO: Email Validation
-                Console.WriteLine("Please enter the Admin user's Email.");
-                string email = Console.ReadLine();
+                string adminEmail = GetAdminUserEmailInput();
 
                 // TODO: Password Validation
                 Console.WriteLine("Please enter a strong password for the Customer's Admin User.");
@@ -238,11 +237,11 @@ namespace TenantManager
                 int systemOfMeasurement = 1;
                 string systemOfMeasurementName = "English";
 
-                int dataOption = GetDataOptionFromUser();
+                bool includeDemoData = IncludeDemoData();
 
                 Console.WriteLine();
                 Console.WriteLine($"Creating: {databaseName} using {systemOfMeasurementName} system of measurement");
-                CreateShardSample.CreateShard(shardMap, databaseName, dataOption, systemOfMeasurement);
+                CreateShardSample.CreateShard(shardMap, databaseName, includeDemoData, systemOfMeasurement);
 
                 var tenantId = SqlDatabaseUtils.TryGetShardId(databaseName);
                 Console.WriteLine($"ShardId: {tenantId}");
@@ -252,8 +251,8 @@ namespace TenantManager
 
                 if (success)
                 {
-                    InsertNewTenantAdminUser(email, email, password, tenantId, databaseName);
-                    userNames.Add(email);
+                    InsertNewTenantAdminUser(adminEmail, adminEmail, password, tenantId, databaseName);
+                    userNames.Add(adminEmail);
                 }
 
                 if (!Configuration.IsDevelopment)
@@ -261,51 +260,54 @@ namespace TenantManager
             }
         }
 
-        private static int GetDataOptionFromUser()
+        private static string GetAdminUserEmailInput()
         {
-            Console.WriteLine("1. Create blank database");
-            Console.WriteLine("2. Create demo database");
-            int dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            while (dataOption < 0 || dataOption > 2)
-                dataOption = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            return dataOption;
-        }
+            Console.WriteLine("Please enter the Admin user's Email.");
+            var validEmail = GetEmailInput();
 
-        private static void GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string somString)
-        {
-            Console.WriteLine("1. This customer uses the English system of measurement.");
-            Console.WriteLine("2. This customer uses the Metric system of measurement.");
-            systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            while (systemOfMeasurement < 0 || systemOfMeasurement > 2)
-                systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
-            somString = (systemOfMeasurement == 1) ? "English" : "Metric";
-        }
+            var emails = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.Email.ToString());
+            bool emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
 
-        private static string GetCompanyNameFromUser()
-        {
-            Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
-            Console.WriteLine("Your entry will be displayed when users from this company are logged in to the web client.");
-            string companyName = Console.ReadLine();
+            if (!emailExists)
+                return validEmail;
 
-            return companyName;
-        }
+            ConsoleUtils.WriteColor(DangerColor, $"'{validEmail}' is already in use. Please enter a unique email address.");
 
-        private static bool DatabaseNameIsValid(string companyName)
-        {
-            var shardMap = TryGetListShardMap();
-            if (shardMap == null)
+            while (true)
             {
-                return true;
+                validEmail = GetEmailInput();
+                emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
+
+                switch (emailExists)
+                {
+                    case false:
+                        return validEmail;
+                    case true:
+                        ConsoleUtils.WriteColor(DangerColor, $"'{validEmail}' is already in use. Please enter a unique email address.");
+                        break;
+                }
             }
-            var allShards = shardMap.GetShards();
-
-            var database = allShards.FirstOrDefault(shard => shard.Location.Database.Contains(companyName));
-
-
-            return database is null;
         }
 
-        private static string GetDatabaseNameFromUser()
+        private static string GetEmailInput()
+        {
+            while (true)
+            {
+                string email = Console.ReadLine().Trim();
+                bool valid = email.Contains("@");
+
+                switch (valid)
+                {
+                    case true:
+                        return email;
+                    case false:
+                        ConsoleUtils.WriteColor(DangerColor, $"'{email}' is not a valid email address. Please enter a valid email address.");
+                        break;
+                }
+            }
+        }
+
+        private static string GetDatabaseNameInput()
         {
             Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
             Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
@@ -328,6 +330,53 @@ namespace TenantManager
                         break;
                 }
             }
+        }
+
+        private static bool IncludeDemoData()
+        {
+            Console.WriteLine("1. Create blank database");
+            Console.WriteLine("2. Create demo database");
+
+            int includeDemoData = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+
+            while (includeDemoData < 0 || includeDemoData > 2)
+                includeDemoData = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+
+            return includeDemoData == 2;
+        }
+
+        private static void GetSystemOfMeasurementFromUser(out int systemOfMeasurement, out string somString)
+        {
+            Console.WriteLine("1. This customer uses the English system of measurement.");
+            Console.WriteLine("2. This customer uses the Metric system of measurement.");
+            systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            while (systemOfMeasurement < 0 || systemOfMeasurement > 2)
+                systemOfMeasurement = ConsoleUtils.ReadIntegerInput("Enter an option [1-2] and press ENTER: ");
+            somString = (systemOfMeasurement == 1) ? "English" : "Metric";
+        }
+
+        private static string GetCompanyNameInput()
+        {
+            Console.WriteLine("Please enter the Customer's Company Name as you would like it to display.");
+            Console.WriteLine("Your entry will be displayed when users from this company are logged in to the web client.");
+            string companyName = Console.ReadLine();
+
+            return companyName;
+        }
+
+        private static bool DatabaseNameIsValid(string companyName)
+        {
+            var shardMap = TryGetListShardMap();
+            if (shardMap == null)
+            {
+                return true;
+            }
+            var allShards = shardMap.GetShards();
+
+            var database = allShards.FirstOrDefault(shard => shard.Location.Database.Contains(companyName));
+
+
+            return database is null;
         }
 
         private static void InsertNewTenantAdminUser(string userName, string email, string password, Guid tenantId, string tenantName)
@@ -361,7 +410,7 @@ namespace TenantManager
                     SqlDatabaseUtils.DeleteShard(tenantName);
 
                     if (SqlDatabaseUtils.DeleteTenantUsers(tenantName))
-                        userNames = SqlDatabaseUtils.GetAllTenantUserLookups();
+                        userNames = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.UserName.ToString());
 
                     SqlDatabaseUtils.DeleteTenant(tenantName);
                     AzureStorageUtils.DeleteTenantStorageContainer(tenantName);
