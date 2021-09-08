@@ -294,7 +294,9 @@ namespace TenantManager
             while (true)
             {
                 string email = Console.ReadLine().Trim();
-                bool valid = email.Contains("@");
+                var regex = @"^(.+)@(.+)$";
+                var match = Regex.Match(email, regex, RegexOptions.IgnoreCase);
+                bool valid = match.Success;
 
                 switch (valid)
                 {
