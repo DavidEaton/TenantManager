@@ -1,5 +1,5 @@
 CREATE TABLE [dbo].[Person](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[LastName] [nvarchar](255) NULL,
 	[FirstName] [nvarchar](255) NULL,
 	[MiddleName] [nvarchar](255) NULL,
@@ -17,9 +17,9 @@ CREATE TABLE [dbo].[Person](
 GO
 
 CREATE TABLE [dbo].[Organization](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[Name] [nvarchar](255) NULL,
-	[ContactId] [int] NULL,
+	[ContactId] [bigint] NULL,
 	[AddressLine] [nvarchar](255) NULL,
 	[AddressCity] [nvarchar](255) NULL,
 	[AddressState] [nvarchar](255) NULL,
@@ -38,14 +38,14 @@ GO
 CREATE NONCLUSTERED INDEX [IX_Organization_ContactId] ON [dbo].[Organization] ([ContactId] ASC)
 
 CREATE TABLE [dbo].[Customer](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[CustomerType] [int] NOT NULL,
 	[AllowMail] [bit] NULL,
 	[AllowEmail] [bit] NULL,
 	[AllowSms] [bit] NULL,
 	[Created] [datetime2](7) NOT NULL,
-	[OrganizationId] [int] NULL,
-	[PersonId] [int] NULL,
+	[OrganizationId] [bigint] NULL,
+	[PersonId] [bigint] NULL,
  CONSTRAINT [PK_Customer] PRIMARY KEY CLUSTERED ([Id] ASC))
 GO
 
@@ -70,11 +70,11 @@ CREATE NONCLUSTERED INDEX [IX_Customer_PersonId] ON [dbo].[Customer] ([PersonId]
 GO
 
 CREATE TABLE [dbo].[Email](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[Address] [nvarchar](254) NOT NULL,
 	[IsPrimary] [bit] NOT NULL,
-	[OrganizationId] [int] NULL,
-	[PersonId] [int] NULL,
+	[OrganizationId] [bigint] NULL,
+	[PersonId] [bigint] NULL,
  CONSTRAINT [PK_Email] PRIMARY KEY CLUSTERED ([Id] ASC))
 GO
 
@@ -102,12 +102,12 @@ CREATE NONCLUSTERED INDEX [IX_Email_PersonId] ON [dbo].[Email] ([PersonId] ASC)
 GO
 
 CREATE TABLE [dbo].[Phone](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[Number] [nvarchar](50) NOT NULL,
 	[PhoneType] [int] NOT NULL,
 	[IsPrimary] [bit] NOT NULL,
-	[OrganizationId] [int] NULL,
-	[PersonId] [int] NULL,
+	[OrganizationId] [bigint] NULL,
+	[PersonId] [bigint] NULL,
  CONSTRAINT [PK_Phone] PRIMARY KEY CLUSTERED ([Id] ASC))
 GO
 
@@ -132,12 +132,12 @@ CREATE NONCLUSTERED INDEX [IX_Phone_PersonId] ON [dbo].[Phone] ([PersonId] ASC)
 GO
 
 CREATE TABLE [dbo].[Vehicle](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Id] [bigint] IDENTITY(1,1) NOT NULL,
 	[VIN] [nvarchar](max) NULL,
 	[Year] [int] NOT NULL,
 	[Make] [nvarchar](max) NULL,
 	[Model] [nvarchar](max) NULL,
-	[CustomerId] [int] NULL,
+	[CustomerId] [bigint] NULL,
  CONSTRAINT [PK_Vehicle] PRIMARY KEY CLUSTERED ([Id] ASC))
 GO
 
