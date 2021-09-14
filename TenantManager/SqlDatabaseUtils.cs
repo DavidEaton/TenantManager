@@ -250,6 +250,7 @@ namespace TenantManager
 											 ,[LockoutEnabled]
 											 ,[AccessFailedCount]
 											 ,[Role]
+											 ,[ShopRole]
 											 ,[TenantId]
 											 ,[TenantName])
 											 VALUES (
@@ -266,6 +267,7 @@ namespace TenantManager
 											 ,@lockoutEnabled
 											 ,@accessFailedCount
 											 ,@role
+											 ,@shopRole
 											 ,@tenantId
 											 ,@tenantName)";
 				cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString().ToLower());
@@ -281,6 +283,7 @@ namespace TenantManager
 				cmd.Parameters.AddWithValue("@lockoutEnabled", false);
 				cmd.Parameters.AddWithValue("@accessFailedCount", 0);
 				cmd.Parameters.AddWithValue("@role", role);
+				cmd.Parameters.AddWithValue("@shopRole", role);
 				cmd.Parameters.AddWithValue("@tenantId", tenantId);
 				cmd.Parameters.AddWithValue("@tenantName", tenantName);
 				cmd.CommandTimeout = 60;
