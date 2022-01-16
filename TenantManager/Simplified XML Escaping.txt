@@ -1,0 +1,18 @@
+﻿Simplified XML Escaping (prioritized, 100% complete)
+Always (90% important to remember)
+Escape < as &lt; unless < is starting a <tag/> or other markup.
+Escape & as &amp; unless & is starting an &entity;.
+
+Attribute Values (9% important to remember)
+attr=" 'Single quotes' are ok within double quotes."
+attr=' "Double quotes" are ok within single quotes.'
+Escape " as &quot; and ' as &apos; otherwise.
+
+Comments, CDATA, and Processing Instructions (0.9% important to remember)
+<!-- Within comments --> nothing has to be escaped but no -- strings are allowed.
+<![CDATA[ Within CDATA ]]> nothing has to be escaped, but no ]]> strings are allowed.
+<?PITarget Within PIs ?> nothing has to be escaped, but no ?> strings are allowed.
+
+Esoterica (0.1% important to remember)
+Escape control codes in XML 1.1 via Base64 or Numeric Character References.
+Escape ]]> as ]]&gt; unless ]]> is ending a CDATA section.
