@@ -410,13 +410,13 @@ namespace TenantManager
 			}
 		}
 
-		public static List<string> GetAllIdentityByField(string fieldName)
+		public static List<string> GetAllAspNetUsersByFieldName(string fieldName)
 		{
-			string serverName = Configuration.IsDevelopment
+			var serverName = Configuration.IsDevelopment
 				? Configuration.IdentityTenantsServerNameDevelopment
 				: Configuration.IdentityTenantsServerNameProduction;
 
-			List<string> emails = new List<string>();
+			var list = new List<string>();
 
 			using (SqlConnection connection = new SqlConnection(Configuration.GetConnectionString(
 						serverName,
@@ -434,7 +434,7 @@ namespace TenantManager
 							while (reader.Read())
 							{
 								if (!reader.IsDBNull(reader.GetOrdinal($"{fieldName}")))
-									emails.Add(reader.GetString(0));
+									list.Add(reader.GetString(0));
 							}
 						}
 					}
@@ -446,7 +446,7 @@ namespace TenantManager
 				}
 			}
 
-			return emails;
+			return list;
 		}
 
 		public static void ExecuteSqlScript(string server, string db, string scriptFile)

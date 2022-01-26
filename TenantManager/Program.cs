@@ -66,7 +66,7 @@ namespace TenantManager
         private static void MenuLoop()
         {
             shardMapManager = ShardManagementUtils.TryGetShardMapManager();
-            userNames = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.UserName.ToString());
+            userNames = SqlDatabaseUtils.GetAllAspNetUsersByFieldName(IdentityField.UserName.ToString());
 
             // Loop until the user chose "Exit".
             bool continueLoop;
@@ -265,7 +265,7 @@ namespace TenantManager
             Console.WriteLine("Please enter the Admin user's Email.");
             var validEmail = GetEmailInput();
 
-            var emails = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.Email.ToString());
+            var emails = SqlDatabaseUtils.GetAllAspNetUsersByFieldName(IdentityField.Email.ToString());
             bool emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
 
             if (!emailExists)
@@ -412,7 +412,7 @@ namespace TenantManager
                     SqlDatabaseUtils.DeleteShard(tenantName);
 
                     if (SqlDatabaseUtils.DeleteTenantUsers(tenantName))
-                        userNames = SqlDatabaseUtils.GetAllIdentityByField(IdentityField.UserName.ToString());
+                        userNames = SqlDatabaseUtils.GetAllAspNetUsersByFieldName(IdentityField.UserName.ToString());
 
                     SqlDatabaseUtils.DeleteTenant(tenantName);
                     AzureStorageUtils.DeleteTenantStorageContainer(tenantName);
