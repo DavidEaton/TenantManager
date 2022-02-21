@@ -9,234 +9,234 @@ using System.Threading;
 
 namespace TenantManager
 {
-	/// <summary>
-	/// Helper methods for interacting with SQL Databases.
-	/// </summary>
-	internal static class SqlDatabaseUtils
-	{
-		/// <summary>
-		/// SQL master database name.
-		/// </summary>
-		public const string MasterDatabaseName = "master";
-		static readonly bool isIdentity = true;
-		static readonly string appServerName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
-		private static readonly string identityTenantsServerName = Configuration.IsDevelopment
-							  ? Configuration.IdentityTenantsServerNameDevelopment
-							  : Configuration.IdentityTenantsServerNameProduction;
-		/// <summary>
-		/// Returns true if we can connect to the database.
-		/// </summary>
-		public static bool TryConnectToSqlDatabase()
-		{
-			string connectionString =
-				Configuration.GetConnectionString(
-					appServerName,
-					MasterDatabaseName,
-					!isIdentity);
+    /// <summary>
+    /// Helper methods for interacting with SQL Databases.
+    /// </summary>
+    internal static class SqlDatabaseUtils
+    {
+        /// <summary>
+        /// SQL master database name.
+        /// </summary>
+        public const string MasterDatabaseName = "master";
+        static readonly bool isIdentity = true;
+        static readonly string appServerName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+        private static readonly string identityTenantsServerName = Configuration.IsDevelopment
+                              ? Configuration.IdentityTenantsServerNameDevelopment
+                              : Configuration.IdentityTenantsServerNameProduction;
+        /// <summary>
+        /// Returns true if we can connect to the database.
+        /// </summary>
+        public static bool TryConnectToSqlDatabase()
+        {
+            string connectionString =
+                Configuration.GetConnectionString(
+                    appServerName,
+                    MasterDatabaseName,
+                    !isIdentity);
 
-			try
-			{
-				using (ReliableSqlConnection conn = new ReliableSqlConnection(
-					connectionString,
-					SqlRetryPolicy,
-					SqlRetryPolicy))
-				{
-					conn.Open();
-				}
+            try
+            {
+                using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                    connectionString,
+                    SqlRetryPolicy,
+                    SqlRetryPolicy))
+                {
+                    conn.Open();
+                }
 
-				return true;
-			}
-			catch (SqlException e)
-			{
-				ConsoleUtils.WriteWarning("Failed to connect to SQL database with connection string:");
-				Console.WriteLine("\n{0}\n", connectionString);
-				ConsoleUtils.WriteWarning("If this connection string is incorrect, please update the Sql Database settings in App.Config.\n\nException message: {0}", e.Message);
-				return false;
-			}
-		}
+                return true;
+            }
+            catch (SqlException e)
+            {
+                ConsoleUtils.WriteWarning("Failed to connect to SQL database with connection string:");
+                Console.WriteLine("\n{0}\n", connectionString);
+                ConsoleUtils.WriteWarning("If this connection string is incorrect, please update the Sql Database settings in App.Config.\n\nException message: {0}", e.Message);
+                return false;
+            }
+        }
 
-		public static bool DatabaseExists(string server, string db)
-		{
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
+        public static bool DatabaseExists(string server, string db)
+        {
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "select count(*) from sys.databases where name = @dbname";
-				cmd.Parameters.AddWithValue("@dbname", db);
-				cmd.CommandTimeout = 60;
-				int count = conn.ExecuteCommand<int>(cmd);
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(*) from sys.databases where name = @dbname";
+                cmd.Parameters.AddWithValue("@dbname", db);
+                cmd.CommandTimeout = 60;
+                int count = conn.ExecuteCommand<int>(cmd);
 
-				bool exists = count > 0;
-				return exists;
-			}
-		}
+                bool exists = count > 0;
+                return exists;
+            }
+        }
 
-		public static bool DatabaseIsOnline(string server, string db)
-		{
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
+        public static bool DatabaseIsOnline(string server, string db)
+        {
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "select count(*) from sys.databases where name = @dbname and state = 0"; // online
-				cmd.Parameters.AddWithValue("@dbname", db);
-				cmd.CommandTimeout = 60;
-				int count = conn.ExecuteCommand<int>(cmd);
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "select count(*) from sys.databases where name = @dbname and state = 0"; // online
+                cmd.Parameters.AddWithValue("@dbname", db);
+                cmd.CommandTimeout = 60;
+                int count = conn.ExecuteCommand<int>(cmd);
 
-				bool exists = count > 0;
-				return exists;
-			}
-		}
+                bool exists = count > 0;
+                return exists;
+            }
+        }
 
-		public static void CreateDatabase(string server, string db)
-		{
-			ConsoleUtils.WriteInfo("Creating database {0}", db);
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
-				SqlCommand cmd = conn.CreateCommand();
+        public static void CreateDatabase(string server, string db)
+        {
+            ConsoleUtils.WriteInfo("Creating database {0}", db);
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
+                SqlCommand cmd = conn.CreateCommand();
 
-				// Determine if we are connecting to Azure SQL DB
-				cmd.CommandText = "SELECT SERVERPROPERTY('EngineEdition')";
-				cmd.CommandTimeout = 60;
-				int engineEdition = conn.ExecuteCommand<int>(cmd);
+                // Determine if we are connecting to Azure SQL DB
+                cmd.CommandText = "SELECT SERVERPROPERTY('EngineEdition')";
+                cmd.CommandTimeout = 60;
+                int engineEdition = conn.ExecuteCommand<int>(cmd);
 
-				if (engineEdition == 5)
-				{
-					// Azure SQL DB
-					SqlRetryPolicy.ExecuteAction(() =>
-					{
-						if (!DatabaseExists(server, db))
-						{
-							if (Configuration.UseElasticPool)
-							{
-								// Begin creation (which is async for Standard/Premium editions)
-								cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
-							}
-							else
-							{
-								cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}')";
-							}
-							cmd.CommandTimeout = 120;
-							cmd.ExecuteNonQuery();
-						}
-					});
+                if (engineEdition == 5)
+                {
+                    // Azure SQL DB
+                    SqlRetryPolicy.ExecuteAction(() =>
+                    {
+                        if (!DatabaseExists(server, db))
+                        {
+                            if (Configuration.UseElasticPool)
+                            {
+                                // Begin creation (which is async for Standard/Premium editions)
+                                cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}', SERVICE_OBJECTIVE = {Configuration.ServiceObjective})";
+                            }
+                            else
+                            {
+                                cmd.CommandText = $"CREATE DATABASE {BracketEscapeName(db)} (EDITION = '{Configuration.DatabaseEdition}')";
+                            }
+                            cmd.CommandTimeout = 120;
+                            cmd.ExecuteNonQuery();
+                        }
+                    });
 
-					// Wait for the operation to complete
-					while (!DatabaseIsOnline(server, db))
-					{
-						ConsoleUtils.WriteInfo("Waiting for database {0} to come online...", db);
-						Thread.Sleep(TimeSpan.FromSeconds(5));
-					}
+                    // Wait for the operation to complete
+                    while (!DatabaseIsOnline(server, db))
+                    {
+                        ConsoleUtils.WriteInfo("Waiting for database {0} to come online...", db);
+                        Thread.Sleep(TimeSpan.FromSeconds(5));
+                    }
 
-					ConsoleUtils.WriteInfo("Database {0} is online", db);
-				}
-				else
-				{
-					// Other edition of SQL DB
-					cmd.CommandText = string.Format("CREATE DATABASE {0}", BracketEscapeName(db));
-					conn.ExecuteCommand(cmd);
-				}
-			}
-		}
+                    ConsoleUtils.WriteInfo("Database {0} is online", db);
+                }
+                else
+                {
+                    // Other edition of SQL DB
+                    cmd.CommandText = string.Format("CREATE DATABASE {0}", BracketEscapeName(db));
+                    conn.ExecuteCommand(cmd);
+                }
+            }
+        }
 
-		public static void DropDatabase(string server, string db)
-		{
-			ConsoleUtils.WriteInfo("Deleting database '{0}'", db);
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
-				SqlCommand cmd = conn.CreateCommand();
+        public static void DropDatabase(string server, string db)
+        {
+            ConsoleUtils.WriteInfo("Deleting database '{0}'", db);
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(server, MasterDatabaseName, !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
+                SqlCommand cmd = conn.CreateCommand();
 
-				// Determine if we are connecting to Azure SQL DB
-				cmd.CommandText = "SELECT SERVERPROPERTY('EngineEdition')";
-				cmd.CommandTimeout = 60;
-				int engineEdition = conn.ExecuteCommand<int>(cmd);
+                // Determine if we are connecting to Azure SQL DB
+                cmd.CommandText = "SELECT SERVERPROPERTY('EngineEdition')";
+                cmd.CommandTimeout = 60;
+                int engineEdition = conn.ExecuteCommand<int>(cmd);
 
-				// Drop the database
-				if (engineEdition == 5)
-				{
-					// Azure SQL DB
+                // Drop the database
+                if (engineEdition == 5)
+                {
+                    // Azure SQL DB
 
-					cmd.CommandText = string.Format("DROP DATABASE {0}", BracketEscapeName(db));
-					cmd.ExecuteNonQuery();
-				}
-				else
-				{
-					cmd.CommandText = string.Format(
-						@"ALTER DATABASE {0} SET SINGLE_USER WITH ROLLBACK IMMEDIATE
+                    cmd.CommandText = string.Format("DROP DATABASE {0}", BracketEscapeName(db));
+                    cmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    cmd.CommandText = string.Format(
+                        @"ALTER DATABASE {0} SET SINGLE_USER WITH ROLLBACK IMMEDIATE
 						DROP DATABASE {0}",
-						BracketEscapeName(db));
-					cmd.ExecuteNonQuery();
-				}
-			}
-		}
+                        BracketEscapeName(db));
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
 
-		/// <summary>
-		/// Tries to get the ShardId of the specified database.
-		/// </summary>
-		public static Guid TryGetShardId(string databaseName)
-		{
-			//string shardMapManagerConnectionString =
-			//		Configuration.GetConnectionString(
-			//			appServerName,
-			//			Configuration.ShardMapManagerDatabaseName,
-			//			!isIdentity);
+        /// <summary>
+        /// Tries to get the ShardId of the specified database.
+        /// </summary>
+        public static Guid TryGetShardId(string databaseName)
+        {
+            //string shardMapManagerConnectionString =
+            //		Configuration.GetConnectionString(
+            //			appServerName,
+            //			Configuration.ShardMapManagerDatabaseName,
+            //			!isIdentity);
 
-			if (!DatabaseExists(appServerName, databaseName))
-			{
-				// Database does not exist so return a new default Guid (initialied with all 0s).
-				return new Guid();
-			}
+            if (!DatabaseExists(appServerName, databaseName))
+            {
+                // Database does not exist so return a new default Guid (initialied with all 0s).
+                return new Guid();
+            }
 
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(
-					appServerName,
-					Configuration.ShardMapManagerDatabaseName,
-					!isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(
+                    appServerName,
+                    Configuration.ShardMapManagerDatabaseName,
+                    !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "SELECT [ShardId] FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname";
-				cmd.Parameters.AddWithValue("@dbname", databaseName);
-				cmd.CommandTimeout = 60;
-				Guid tenantId = conn.ExecuteCommand<Guid>(cmd);
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT [ShardId] FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname";
+                cmd.Parameters.AddWithValue("@dbname", databaseName);
+                cmd.CommandTimeout = 60;
+                Guid tenantId = conn.ExecuteCommand<Guid>(cmd);
 
-				return tenantId;
-			}
-		}
+                return tenantId;
+            }
+        }
 
-		internal static bool InsertNewTenantAdminUser(string userName, Guid tenantId, string passwordHash, string email, string tenantName)
-		{
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-					Configuration.GetConnectionString(
-						identityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName,
-						isIdentity),
-					SqlRetryPolicy,
-					SqlRetryPolicy))
-			{
-				string role = "Admin";
+        internal static bool InsertNewTenantAdminUser(string userName, Guid tenantId, string passwordHash, string email, string tenantName)
+        {
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                    Configuration.GetConnectionString(
+                        identityTenantsServerName,
+                        Configuration.IdentityTenantsDatabaseName,
+                        isIdentity),
+                    SqlRetryPolicy,
+                    SqlRetryPolicy))
+            {
+                string role = "Admin";
 
-				conn.Open();
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = @"INSERT INTO [dbo].[AspNetUsers] (
+                conn.Open();
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = @"INSERT INTO [dbo].[AspNetUsers] (
 											 [Id]
 											 ,[UserName]
 											 ,[NormalizedUserName]
@@ -270,308 +270,312 @@ namespace TenantManager
 											 ,@shopRole
 											 ,@tenantId
 											 ,@tenantName)";
-				cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString().ToLower());
-				cmd.Parameters.AddWithValue("@userName", userName);
-				cmd.Parameters.AddWithValue("@normalizedUserName", userName.ToUpper());
-				cmd.Parameters.AddWithValue("@email", email);
-				cmd.Parameters.AddWithValue("@normalizedEmail", email.ToUpper());
-				cmd.Parameters.AddWithValue("@emailConfirmed", true);
-				cmd.Parameters.AddWithValue("@passwordHash", passwordHash);
-				cmd.Parameters.AddWithValue("@securityStamp", Guid.NewGuid());
-				cmd.Parameters.AddWithValue("@phoneNumberConfirmed", false);
-				cmd.Parameters.AddWithValue("@twoFactorEnabled", false);
-				cmd.Parameters.AddWithValue("@lockoutEnabled", false);
-				cmd.Parameters.AddWithValue("@accessFailedCount", 0);
-				cmd.Parameters.AddWithValue("@role", role);
-				cmd.Parameters.AddWithValue("@shopRole", role);
-				cmd.Parameters.AddWithValue("@tenantId", tenantId);
-				cmd.Parameters.AddWithValue("@tenantName", tenantName);
-				cmd.CommandTimeout = 60;
-				int count = conn.ExecuteCommand<int>(cmd);
-				ConsoleUtils.WriteInfo("{0} Admin user created in AspNetUsers table", userName);
+                cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString().ToLower());
+                cmd.Parameters.AddWithValue("@userName", userName);
+                cmd.Parameters.AddWithValue("@normalizedUserName", userName.ToUpper());
+                cmd.Parameters.AddWithValue("@email", email);
+                cmd.Parameters.AddWithValue("@normalizedEmail", email.ToUpper());
+                cmd.Parameters.AddWithValue("@emailConfirmed", true);
+                cmd.Parameters.AddWithValue("@passwordHash", passwordHash);
+                cmd.Parameters.AddWithValue("@securityStamp", Guid.NewGuid());
+                cmd.Parameters.AddWithValue("@phoneNumberConfirmed", false);
+                cmd.Parameters.AddWithValue("@twoFactorEnabled", false);
+                cmd.Parameters.AddWithValue("@lockoutEnabled", false);
+                cmd.Parameters.AddWithValue("@accessFailedCount", 0);
+                cmd.Parameters.AddWithValue("@role", role);
+                cmd.Parameters.AddWithValue("@shopRole", role);
+                cmd.Parameters.AddWithValue("@tenantId", tenantId);
+                cmd.Parameters.AddWithValue("@tenantName", tenantName);
+                cmd.CommandTimeout = 60;
+                int count = conn.ExecuteCommand<int>(cmd);
+                ConsoleUtils.WriteInfo("{0} Admin user created in AspNetUsers table", userName);
 
-				bool exists = count > 0;
-				return exists;
-			}
-		}
+                bool exists = count > 0;
+                return exists;
+            }
+        }
 
-		internal static bool InsertNewTenant(string databaseName, Guid id, string companyName)
-		{
-			ConsoleUtils.WriteInfo("Creating new Tenant {0}", databaseName);
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-					Configuration.GetConnectionString(
-						identityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName,
-						isIdentity),
-					SqlRetryPolicy,
-					SqlRetryPolicy))
-			{
-				conn.Open();
+        internal static bool InsertNewTenant(string databaseName, Guid id, string companyName)
+        {
+            ConsoleUtils.WriteInfo("Creating new Tenant {0}", databaseName);
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                    Configuration.GetConnectionString(
+                        identityTenantsServerName,
+                        Configuration.IdentityTenantsDatabaseName,
+                        isIdentity),
+                    SqlRetryPolicy,
+                    SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "INSERT INTO [dbo].[AspNetTenants] ([Id],[Name],[CompanyName]) output INSERTED.Id VALUES (@id,@name,@companyName)";
-				cmd.Parameters.AddWithValue("@id", id);
-				cmd.Parameters.AddWithValue("@name", databaseName);
-				cmd.Parameters.AddWithValue("@companyName", companyName);
-				cmd.CommandTimeout = 60;
-				Guid newId = (Guid)cmd.ExecuteScalar();
-				ConsoleUtils.WriteInfo("{0} Created in AspNetTenants table for {1} with Id {2}", databaseName, companyName, id);
-				// Return the new Id if successful, otherwise return an empty Guid
-				if (newId == id)
-					return true;
-				else
-					return false;
-			}
-		}
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "INSERT INTO [dbo].[AspNetTenants] ([Id],[Name],[CompanyName]) output INSERTED.Id VALUES (@id,@name,@companyName)";
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@name", databaseName);
+                cmd.Parameters.AddWithValue("@companyName", companyName);
+                cmd.CommandTimeout = 60;
+                Guid newId = (Guid)cmd.ExecuteScalar();
+                ConsoleUtils.WriteInfo("{0} Created in AspNetTenants table for {1} with Id {2}", databaseName, companyName, id);
+                // Return the new Id if successful, otherwise return an empty Guid
+                if (newId == id)
+                    return true;
+                else
+                    return false;
+            }
+        }
 
-		internal static bool DeleteTenant(string tenantName)
-		{
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-					Configuration.GetConnectionString(
-						identityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName,
-						isIdentity),
-					SqlRetryPolicy,
-					SqlRetryPolicy))
-			{
-				conn.Open();
+        internal static bool DeleteTenant(string tenantName)
+        {
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                    Configuration.GetConnectionString(
+                        identityTenantsServerName,
+                        Configuration.IdentityTenantsDatabaseName,
+                        isIdentity),
+                    SqlRetryPolicy,
+                    SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "DELETE FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName";
-				cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
-				cmd.CommandTimeout = 60;
-				int result = conn.ExecuteCommand(cmd);
-				ConsoleUtils.WriteInfo($"Deleted tenant '{tenantName}' from Identity Service/Secure Token Service");
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName";
+                cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
+                cmd.CommandTimeout = 60;
+                int result = conn.ExecuteCommand(cmd);
+                ConsoleUtils.WriteInfo($"Deleted tenant '{tenantName}' from Identity Service/Secure Token Service");
 
-				return result > 0 ? true : false;
-			}
-		}
+                return result > 0 ? true : false;
+            }
+        }
 
-		internal static bool DeleteTenantUsers(string tenantName)
-		{
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-					Configuration.GetConnectionString(
-						identityTenantsServerName,
-						Configuration.IdentityTenantsDatabaseName,
-						isIdentity),
-					SqlRetryPolicy,
-					SqlRetryPolicy))
-			{
-				conn.Open();
+        internal static bool DeleteTenantUsers(string tenantName)
+        {
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                    Configuration.GetConnectionString(
+                        identityTenantsServerName,
+                        Configuration.IdentityTenantsDatabaseName,
+                        isIdentity),
+                    SqlRetryPolicy,
+                    SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "DELETE FROM [dbo].[AspNetUsers] WHERE TenantId = (SELECT TOP (1) Id FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName)";
-				cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
-				cmd.CommandTimeout = 60;
-				int result = conn.ExecuteCommand(cmd);
-				ConsoleUtils.WriteInfo($"Deleted logins for '{tenantName}' from Identity Service/Secure Token Service");
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM [dbo].[AspNetUsers] WHERE TenantId = (SELECT TOP (1) Id FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName)";
+                cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
+                cmd.CommandTimeout = 60;
+                int result = conn.ExecuteCommand(cmd);
+                ConsoleUtils.WriteInfo($"Deleted logins for '{tenantName}' from Identity Service/Secure Token Service");
 
-				return result > 0 ? true : false;
-			}
-		}
+                return result > 0 ? true : false;
+            }
+        }
 
-		internal static bool DeleteShard(string tenantName)
-		{
-			string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
+        internal static bool DeleteShard(string tenantName)
+        {
+            string serverName = Configuration.IsDevelopment ? Configuration.AppServerNameDevelopment : Configuration.AppServerNameProduction;
 
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(
-					serverName,
-					Configuration.ShardMapManagerDatabaseName,
-					!isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(
+                    serverName,
+                    Configuration.ShardMapManagerDatabaseName,
+                    !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
 
-				SqlCommand cmd = conn.CreateCommand();
-				cmd.CommandText = "DELETE FROM [__ShardManagement].[ShardMappingsGlobal] WHERE [ShardId] = (SELECT TOP (1) [ShardId] FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname)";
-				cmd.Parameters.AddWithValue("@dbname", tenantName);
-				cmd.CommandTimeout = 60;
-				var result = conn.ExecuteCommand(cmd);
+                SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM [__ShardManagement].[ShardMappingsGlobal] WHERE [ShardId] = (SELECT TOP (1) [ShardId] FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname)";
+                cmd.Parameters.AddWithValue("@dbname", tenantName);
+                cmd.CommandTimeout = 60;
+                var result = conn.ExecuteCommand(cmd);
 
-				string message = (result > 0) ? $"Deleted Shard mapping global record for '{tenantName}'." : $"Shard mapping global record FAILED to delete for '{tenantName}'.";
+                string message = (result > 0) ? $"Deleted Shard mapping global record for '{tenantName}'." : $"Shard mapping global record FAILED to delete for '{tenantName}'.";
 
-				ConsoleUtils.WriteInfo(message);
+                ConsoleUtils.WriteInfo(message);
 
-				bool deleted = result > 0 ? true : false;
+                bool deleted = result > 0 ? true : false;
 
-				cmd = conn.CreateCommand();
-				cmd.CommandText = "DELETE FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname";
-				cmd.Parameters.AddWithValue("@dbname", tenantName);
-				cmd.CommandTimeout = 60;
-				result = conn.ExecuteCommand(cmd);
+                cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM [__ShardManagement].[ShardsGlobal] WHERE [DatabaseName] = @dbname";
+                cmd.Parameters.AddWithValue("@dbname", tenantName);
+                cmd.CommandTimeout = 60;
+                result = conn.ExecuteCommand(cmd);
 
-				message = result > 0 ? $"Deleted Shard global record for '{tenantName}'." : $"Shard global record FAILED to delete for '{tenantName}'.";
+                message = result > 0 ? $"Deleted Shard global record for '{tenantName}'." : $"Shard global record FAILED to delete for '{tenantName}'.";
 
-				ConsoleUtils.WriteInfo(message);
+                ConsoleUtils.WriteInfo(message);
 
-				return deleted && (result > 0);
-			}
-		}
+                return deleted && (result > 0);
+            }
+        }
 
-		public static List<string> GetAllAspNetUsersByFieldName(string fieldName)
-		{
-			var serverName = Configuration.IsDevelopment
-				? Configuration.IdentityTenantsServerNameDevelopment
-				: Configuration.IdentityTenantsServerNameProduction;
+        public static List<string> GetAllAspNetUsersByFieldName(string fieldName)
+        {
+            var serverName = Configuration.IsDevelopment
+                ? Configuration.IdentityTenantsServerNameDevelopment
+                : Configuration.IdentityTenantsServerNameProduction;
 
-			var list = new List<string>();
+            var message = "Database connection failed";
+            var list = new List<string>();
 
-			using (SqlConnection connection = new SqlConnection(Configuration.GetConnectionString(
-						serverName,
-						Configuration.IdentityTenantsDatabaseName,
-						isIdentity)))
-			{
-				try
-				{
-					connection.Open();
-					string query = $"SELECT [{fieldName}] FROM [dbo].[AspNetUsers]";
-					using (SqlCommand command = new SqlCommand(query, connection))
-					{
-						using (SqlDataReader reader = command.ExecuteReader())
-						{
-							while (reader.Read())
-							{
-								if (!reader.IsDBNull(reader.GetOrdinal($"{fieldName}")))
-									list.Add(reader.GetString(0));
-							}
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex);
-					return null;
-				}
-			}
+            using (SqlConnection connection = new SqlConnection(Configuration.GetConnectionString(
+                        serverName,
+                        Configuration.IdentityTenantsDatabaseName,
+                        isIdentity)))
+            {
+                try
+                {
+                    connection.Open();
+                    string query = $"SELECT [{fieldName}] FROM [dbo].[AspNetUsers]";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                if (!reader.IsDBNull(reader.GetOrdinal($"{fieldName}")))
+                                    list.Add(reader.GetString(0));
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (Configuration.IsDevelopment)
+                        Console.WriteLine(ex);
+                    else
+                        Console.WriteLine(message);
+                    return null;
+                }
+            }
 
-			return list;
-		}
+            return list;
+        }
 
-		public static void ExecuteSqlScript(string server, string db, string scriptFile)
-		{
-			ConsoleUtils.WriteInfo($"Executing script {scriptFile}");
-			using (ReliableSqlConnection conn = new ReliableSqlConnection(
-				Configuration.GetConnectionString(server, db, !isIdentity),
-				SqlRetryPolicy,
-				SqlRetryPolicy))
-			{
-				conn.Open();
-				SqlCommand cmd = conn.CreateCommand();
+        public static void ExecuteSqlScript(string server, string db, string scriptFile)
+        {
+            ConsoleUtils.WriteInfo($"Executing script {scriptFile}");
+            using (ReliableSqlConnection conn = new ReliableSqlConnection(
+                Configuration.GetConnectionString(server, db, !isIdentity),
+                SqlRetryPolicy,
+                SqlRetryPolicy))
+            {
+                conn.Open();
+                SqlCommand cmd = conn.CreateCommand();
 
-				// Read the commands from the sql script file
-				IEnumerable<string> commands = ReadSqlScript(scriptFile);
+                // Read the commands from the sql script file
+                IEnumerable<string> commands = ReadSqlScript(scriptFile);
 
-				foreach (string command in commands)
-				{
-					cmd.CommandText = command;
-					cmd.CommandTimeout = 120;
-					conn.ExecuteCommand(cmd);
-				}
-			}
-		}
+                foreach (string command in commands)
+                {
+                    cmd.CommandText = command;
+                    cmd.CommandTimeout = 120;
+                    conn.ExecuteCommand(cmd);
+                }
+            }
+        }
 
-		private static IEnumerable<string> ReadSqlScript(string scriptFile)
-		{
-			List<string> commands = new List<string>();
-			using (TextReader tr = new StreamReader(scriptFile))
-			{
-				StringBuilder sb = new StringBuilder();
-				string line;
-				while ((line = tr.ReadLine()) != null)
-				{
-					if (line == "GO")
-					{
-						commands.Add(sb.ToString());
-						sb.Clear();
-					}
-					else
-					{
-						sb.AppendLine(line);
-					}
-				}
-			}
+        private static IEnumerable<string> ReadSqlScript(string scriptFile)
+        {
+            List<string> commands = new List<string>();
+            using (TextReader tr = new StreamReader(scriptFile))
+            {
+                StringBuilder sb = new StringBuilder();
+                string line;
+                while ((line = tr.ReadLine()) != null)
+                {
+                    if (line == "GO")
+                    {
+                        commands.Add(sb.ToString());
+                        sb.Clear();
+                    }
+                    else
+                    {
+                        sb.AppendLine(line);
+                    }
+                }
+            }
 
-			return commands;
-		}
+            return commands;
+        }
 
-		/// <summary>
-		/// Escapes a SQL object name with brackets to prevent SQL injection.
-		/// </summary>
-		private static string BracketEscapeName(string sqlName)
-		{
-			return '[' + sqlName.Replace("]", "]]") + ']';
-		}
+        /// <summary>
+        /// Escapes a SQL object name with brackets to prevent SQL injection.
+        /// </summary>
+        private static string BracketEscapeName(string sqlName)
+        {
+            return '[' + sqlName.Replace("]", "]]") + ']';
+        }
 
-		/// <summary>
-		/// Gets the retry policy to use for connections to SQL Server.
-		/// </summary>
-		public static RetryPolicy SqlRetryPolicy
-		{
-			get
-			{
-				return new RetryPolicy<ExtendedSqlDatabaseTransientErrorDetectionStrategy>(10, TimeSpan.FromSeconds(5));
-			}
-		}
-		//private static string GetIdentityTenantsServerName()
-		//{
-		//	return Configuration.IsDevelopment
-		//					  ? Configuration.IdentityTenantsServerNameDevelopment
-		//					  : Configuration.IdentityTenantsServerNameProduction;
-		//}
+        /// <summary>
+        /// Gets the retry policy to use for connections to SQL Server.
+        /// </summary>
+        public static RetryPolicy SqlRetryPolicy
+        {
+            get
+            {
+                return new RetryPolicy<ExtendedSqlDatabaseTransientErrorDetectionStrategy>(10, TimeSpan.FromSeconds(5));
+            }
+        }
+        //private static string GetIdentityTenantsServerName()
+        //{
+        //	return Configuration.IsDevelopment
+        //					  ? Configuration.IdentityTenantsServerNameDevelopment
+        //					  : Configuration.IdentityTenantsServerNameProduction;
+        //}
 
-		/// <summary>
-		/// Extended sql transient error detection strategy that performs additional transient error
-		/// checks besides the ones done by the enterprise library.
-		/// </summary>
-		private class ExtendedSqlDatabaseTransientErrorDetectionStrategy : ITransientErrorDetectionStrategy
-		{
-			/// <summary>
-			/// Enterprise transient error detection strategy.
-			/// </summary>
-			private SqlDatabaseTransientErrorDetectionStrategy sqltransientErrorDetectionStrategy = new SqlDatabaseTransientErrorDetectionStrategy();
+        /// <summary>
+        /// Extended sql transient error detection strategy that performs additional transient error
+        /// checks besides the ones done by the enterprise library.
+        /// </summary>
+        private class ExtendedSqlDatabaseTransientErrorDetectionStrategy : ITransientErrorDetectionStrategy
+        {
+            /// <summary>
+            /// Enterprise transient error detection strategy.
+            /// </summary>
+            private SqlDatabaseTransientErrorDetectionStrategy sqltransientErrorDetectionStrategy = new SqlDatabaseTransientErrorDetectionStrategy();
 
-			/// <summary>
-			/// Checks with enterprise library's default handler to see if the error is transient, additionally checks
-			/// for such errors using the code in the in <see cref="IsTransientException"/> function.
-			/// </summary>
-			/// <param name="ex">Exception being checked.</param>
-			/// <returns><c>true</c> if exception is considered transient, <c>false</c> otherwise.</returns>
-			public bool IsTransient(Exception ex)
-			{
-				return sqltransientErrorDetectionStrategy.IsTransient(ex) || IsTransientException(ex);
-			}
+            /// <summary>
+            /// Checks with enterprise library's default handler to see if the error is transient, additionally checks
+            /// for such errors using the code in the in <see cref="IsTransientException"/> function.
+            /// </summary>
+            /// <param name="ex">Exception being checked.</param>
+            /// <returns><c>true</c> if exception is considered transient, <c>false</c> otherwise.</returns>
+            public bool IsTransient(Exception ex)
+            {
+                return sqltransientErrorDetectionStrategy.IsTransient(ex) || IsTransientException(ex);
+            }
 
-			/// <summary>
-			/// Detects transient errors not currently considered as transient by the enterprise library's strategy.
-			/// </summary>
-			/// <param name="ex">Input exception.</param>
-			/// <returns><c>true</c> if exception is considered transient, <c>false</c> otherwise.</returns>
-			private static bool IsTransientException(Exception ex)
-			{
-				SqlException se = ex as SqlException;
+            /// <summary>
+            /// Detects transient errors not currently considered as transient by the enterprise library's strategy.
+            /// </summary>
+            /// <param name="ex">Input exception.</param>
+            /// <returns><c>true</c> if exception is considered transient, <c>false</c> otherwise.</returns>
+            private static bool IsTransientException(Exception ex)
+            {
+                SqlException se = ex as SqlException;
 
-				if (se != null && se.InnerException != null)
-				{
-					Win32Exception we = se.InnerException as Win32Exception;
+                if (se != null && se.InnerException != null)
+                {
+                    Win32Exception we = se.InnerException as Win32Exception;
 
-					if (we != null)
-					{
-						switch (we.NativeErrorCode)
-						{
-							case 0x102:
-								// Transient wait expired error resulting in timeout
-								return true;
-							case 0x121:
-								// Transient semaphore wait expired error resulting in timeout
-								return true;
-						}
-					}
-				}
+                    if (we != null)
+                    {
+                        switch (we.NativeErrorCode)
+                        {
+                            case 0x102:
+                                // Transient wait expired error resulting in timeout
+                                return true;
+                            case 0x121:
+                                // Transient semaphore wait expired error resulting in timeout
+                                return true;
+                        }
+                    }
+                }
 
-				return false;
-			}
-		}
-	}
+                return false;
+            }
+        }
+    }
 }
