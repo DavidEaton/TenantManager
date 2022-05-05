@@ -180,7 +180,17 @@ namespace TenantManager
                         @"ALTER DATABASE {0} SET SINGLE_USER WITH ROLLBACK IMMEDIATE
 						DROP DATABASE {0}",
                         BracketEscapeName(db));
+                    try
+                    {
                     cmd.ExecuteNonQuery();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log it
+                        //throw;
+                        Console.WriteLine(ex.Message);
+                    }
                 }
             }
         }
