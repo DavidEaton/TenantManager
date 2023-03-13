@@ -311,6 +311,8 @@ namespace TenantManager
 
         private static string GetDatabaseNameInput()
         {
+            // TODO: Replace user input with derived database name: what should be that pattern?
+
             Console.WriteLine("Please enter the Customer's Company Name as the new tenant (database) name.");
             Console.WriteLine("Your entry will be converted to all lowercase, all spaces removed.");
 
