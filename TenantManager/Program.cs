@@ -266,7 +266,7 @@ namespace TenantManager
             var validEmail = GetEmailInput();
 
             var emails = SqlDatabaseUtils.GetAllAspNetUsersByFieldName(IdentityField.Email.ToString());
-            bool emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
+            bool emailExists = emails?.Any(e => e.ToLower() == validEmail.ToLower()) == true;
 
             if (!emailExists)
                 return validEmail;
