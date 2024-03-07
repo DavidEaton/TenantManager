@@ -16,9 +16,9 @@ SET IDENTITY_INSERT [dbo].[Organization] OFF
 GO
 SET IDENTITY_INSERT [dbo].[Customer] ON
 GO
-INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [Created], [OrganizationId], [PersonId]) VALUES (2, 0, 0, 1, 1, CAST(N'2021-08-18T00:00:00.0000000' AS DateTime2), 1, NULL)
+INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [OrganizationId], [PersonId]) VALUES (2, 0, 0, 1, 1, 1, NULL)
 GO
-INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [Created], [OrganizationId], [PersonId]) VALUES (3, 0, 0, 0, 1, CAST(N'2021-08-01T00:00:00.0000000' AS DateTime2), NULL, 1)
+INSERT [dbo].[Customer] ([Id], [CustomerType], [AllowMail], [AllowEmail], [AllowSms], [OrganizationId], [PersonId]) VALUES (3, 0, 0, 0, 1, NULL, 1)
 GO
 SET IDENTITY_INSERT [dbo].[Customer] OFF
 GO
