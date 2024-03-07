@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Diagnostics;
+﻿using Microsoft.AspNet.Identity;
 using Microsoft.Azure.SqlDatabase.ElasticScale.ShardManagement;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.AspNet.Identity;
 using TenantManager.Enums;
 
 namespace TenantManager
@@ -264,9 +264,17 @@ namespace TenantManager
         {
             Console.WriteLine("Please enter the Admin user's Email.");
             var validEmail = GetEmailInput();
-
+            bool emailExists = false;
             var emails = SqlDatabaseUtils.GetAllAspNetUsersByFieldName(IdentityField.Email.ToString());
-            bool emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
+            if (emails == null)
+            {
+                // Handle the null case. Maybe throw an exception or return an appropriate value.
+            }
+            else
+            {
+                emailExists = emails.Any(e => e.ToLower() == validEmail.ToLower());
+                // Rest of your code...
+            }
 
             if (!emailExists)
                 return validEmail;

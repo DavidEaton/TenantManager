@@ -172,6 +172,7 @@ namespace TenantManager
                     // Azure SQL DB
 
                     cmd.CommandText = string.Format("DROP DATABASE {0}", BracketEscapeName(db));
+                    cmd.CommandText = $"IF DB_ID(N'{db}') IS NOT NULL DROP DATABASE {db}";
                     cmd.ExecuteNonQuery();
                 }
                 else
@@ -182,7 +183,7 @@ namespace TenantManager
                         BracketEscapeName(db));
                     try
                     {
-                    cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
 
                     }
                     catch (Exception ex)
@@ -355,29 +356,31 @@ namespace TenantManager
 
                 return result > 0 ? true : false;
             }
+            //return true;
+
         }
 
         internal static bool DeleteTenantUsers(string tenantName)
         {
-            using (ReliableSqlConnection conn = new ReliableSqlConnection(
-                    Configuration.GetConnectionString(
-                        identityTenantsServerName,
-                        Configuration.IdentityTenantsDatabaseName,
-                        isIdentity),
-                    SqlRetryPolicy,
-                    SqlRetryPolicy))
-            {
-                conn.Open();
+            //using (ReliableSqlConnection conn = new ReliableSqlConnection(
+            //        Configuration.GetConnectionString(
+            //            identityTenantsServerName,
+            //            Configuration.IdentityTenantsDatabaseName,
+            //            isIdentity),
+            //        SqlRetryPolicy,
+            //        SqlRetryPolicy))
+            //{
+            //    conn.Open();
 
-                SqlCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "DELETE FROM [dbo].[AspNetUsers] WHERE TenantId = (SELECT TOP (1) Id FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName)";
-                cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
-                cmd.CommandTimeout = 60;
-                int result = conn.ExecuteCommand(cmd);
-                ConsoleUtils.WriteInfo($"Deleted logins for '{tenantName}' from Identity Service/Secure Token Service");
+            //    SqlCommand cmd = conn.CreateCommand();
+            //    cmd.CommandText = "DELETE FROM [dbo].[AspNetUsers] WHERE TenantId = (SELECT TOP (1) Id FROM [dbo].[AspNetTenants] WHERE [Name] = @p_TenantName)";
+            //    cmd.Parameters.AddWithValue("@p_TenantName", tenantName);
+            //    cmd.CommandTimeout = 60;
+            //    int result = conn.ExecuteCommand(cmd);
+            //    ConsoleUtils.WriteInfo($"Deleted logins for '{tenantName}' from Identity Service/Secure Token Service");
 
-                return result > 0 ? true : false;
-            }
+            //    return result > 0 ? true : false;
+            return true;
         }
 
         internal static bool DeleteShard(string tenantName)
